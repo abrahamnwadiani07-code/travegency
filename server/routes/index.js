@@ -22,6 +22,7 @@ const autoApplyCtrl  = require('../controllers/autoapply.controller');
 const kycCtrl        = require('../controllers/kyc.controller');
 const cvCtrl         = require('../controllers/cv.controller');
 const stripeCtrl     = require('../controllers/stripe.controller');
+const paypalCtrl     = require('../controllers/paypal.controller');
 const sessionsCtrl   = require('../controllers/sessions.controller');
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -256,6 +257,11 @@ router.get('/pricing/:country',         stripeCtrl.getLocationPricing);
 router.get('/stripe/config',            stripeCtrl.getConfig);
 router.post('/stripe/checkout',         authenticate, stripeCtrl.createCheckout);
 router.post('/stripe/webhook',         stripeCtrl.handleWebhook);
+
+// PayPal
+router.get('/paypal/config',            paypalCtrl.getConfig);
+router.post('/paypal/create-order',     authenticate, paypalCtrl.createOrder);
+router.post('/paypal/capture/:orderId', authenticate, paypalCtrl.captureOrder);
 
 router.get('/visa/search',              sessionsCtrl.searchVisa);
 router.get('/visa/countries',           (req, res) => {

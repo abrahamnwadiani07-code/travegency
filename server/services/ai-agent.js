@@ -798,15 +798,59 @@ async function callClaude(systemPrompt, messages) {
   }
 }
 
+// ── Groq API call (Llama 3.3 70B — free, fastest) ───────────────────────────
+async function callGroq(systemPrompt, messages) {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) return null;
+
+  try {
+    const groqMessages = [
+      { role: 'system', content: systemPrompt + '\n\nIMPORTANT: At the end of every response, suggest 2-3 quick reply options the user can click. Format them as:\n**Quick replies:** option1 | option2 | option3' },
+      ...messages.map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content })),
+    ];
+
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: groqMessages,
+        max_tokens: 1500,
+        temperature: 0.7,
+        top_p: 0.9,
+      }),
+    });
+
+    const data = await res.json();
+    const text = data.choices?.[0]?.message?.content;
+    if (text) {
+      console.log(`[Groq] Response in ${data.usage?.total_time ? (data.usage.total_time * 1000).toFixed(0) + 'ms' : 'fast'}`);
+      return text;
+    }
+    console.error('[Groq] No text:', JSON.stringify(data).substring(0, 200));
+    return null;
+  } catch (err) {
+    console.error('[Groq] Error:', err.message);
+    return null;
+  }
+}
+
 // ── Main chat function with fallback chain ──────────────────────────────────
 async function chat(messages, context) {
   const systemPrompt = buildSystemPrompt(context);
 
-  // Try AI providers in order: Gemini (free) → Claude → Built-in engine
+  // Try AI providers in order: Groq (free+fast) → Gemini (free) → Claude → Built-in
   let aiText = null;
   let provider = 'built-in';
 
-  // 1. Try Google Gemini (free, fast)
+  // 1. Try Groq (free, fastest, Llama 3.3 70B)
+  aiText = await callGroq(systemPrompt, messages);
+  if (aiText) provider = 'groq';
+
+  // 2. Try Google Gemini (free)
   aiText = await callGemini(systemPrompt, messages);
   if (aiText) provider = 'gemini';
 

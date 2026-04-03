@@ -57,7 +57,23 @@ app.use(errorHandler);
 app.listen(PORT, () => {
   console.log(`\n🚀 Tragency API running on http://localhost:${PORT}`);
   console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`   Database:    ${process.env.DB_NAME}@${process.env.DB_HOST}\n`);
+  console.log(`   Database:    ${process.env.DB_NAME || 'via DATABASE_URL'}@${process.env.DB_HOST || 'cloud'}\n`);
+
+  // ── Auto-fetch jobs every 12 hours ──────────────────────────────────────
+  const { fetchAllJobs } = require('./services/job-fetcher');
+  const TWELVE_HOURS = 12 * 60 * 60 * 1000;
+
+  // Fetch on startup (delayed 30s to let DB settle)
+  setTimeout(() => {
+    console.log('📥 Initial job fetch starting...');
+    fetchAllJobs().catch(e => console.error('Job fetch error:', e.message));
+  }, 30000);
+
+  // Then every 12 hours
+  setInterval(() => {
+    console.log('📥 Scheduled job fetch (every 12hrs)...');
+    fetchAllJobs().catch(e => console.error('Job fetch error:', e.message));
+  }, TWELVE_HOURS);
 });
 
 module.exports = app;

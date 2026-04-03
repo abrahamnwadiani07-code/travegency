@@ -20,6 +20,7 @@ const subsCtrl       = require('../controllers/subscriptions.controller');
 const { fetchAllJobs } = require('../services/job-fetcher');
 const autoApplyCtrl  = require('../controllers/autoapply.controller');
 const kycCtrl        = require('../controllers/kyc.controller');
+const cvCtrl         = require('../controllers/cv.controller');
 const sessionsCtrl   = require('../controllers/sessions.controller');
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -241,5 +242,12 @@ router.get('/sessions/video/active',     authenticate, sessionsCtrl.getActiveCal
 // ══════════════════════════════════════════════════════════════════════════════
 router.get('/visa/search',              sessionsCtrl.searchVisa);
 router.get('/visa/:from/:to/:category', sessionsCtrl.getVisaRequirements);
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CV UPLOAD & AUTO-REVIEW
+// ══════════════════════════════════════════════════════════════════════════════
+router.post('/cv/upload',     authenticate, cvCtrl.cvUpload, cvCtrl.uploadAndReview);
+router.get('/cv/reviews',     authenticate, cvCtrl.getReviews);
+router.get('/cv/latest',      authenticate, cvCtrl.getLatestReview);
 
 module.exports = router;

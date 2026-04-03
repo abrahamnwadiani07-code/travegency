@@ -59,9 +59,10 @@ const chat = async (req, res, next) => {
     // Generate AI response — route to travel or jobs AI based on service type
     const serviceType = req.body.service || context.purpose || null;
     const isJobsService = serviceType === 'jobs' || context.purpose === 'Employment';
-    const { content: aiResponse, updates } = isJobsService
+    const aiResult = isJobsService
       ? await aiJobs.generateJobResponse(history, context)
       : await aiAgent.chat(history, context);
+    const { content: aiResponse, updates, suggestions = [], provider = 'built-in' } = aiResult;
 
     // Save AI response
     await query(
@@ -119,6 +120,8 @@ const chat = async (req, res, next) => {
       conversationId: convId,
       ready,
       travelData,
+      suggestions,
+      provider,
       context: {
         ...context,
         ...updates,

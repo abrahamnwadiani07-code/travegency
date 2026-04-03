@@ -679,37 +679,166 @@ LEARNING BEHAVIOR:
 - Remember the user's concerns and address them proactively`;
 }
 
+// ── Generate suggested quick replies based on context ────────────────────────
+function generateSuggestions(context, aiResponse) {
+  const suggestions = [];
+  const from = context.from_country;
+  const to = context.to_country;
+  const path = context.travel_path;
+
+  if (!from) {
+    suggestions.push('Nigeria', 'Ghana', 'Kenya', 'South Africa', 'India');
+  } else if (!to) {
+    suggestions.push('United Kingdom', 'United States', 'Canada', 'Germany', 'Australia');
+  } else if (aiResponse.includes('ready') || aiResponse.includes('agent')) {
+    suggestions.push('Yes, connect me with an agent', 'Tell me more about costs', 'What documents do I need first?');
+  } else if (aiResponse.includes('cost') || aiResponse.includes('fee')) {
+    suggestions.push('That\'s within my budget', 'Are there scholarships?', 'Connect me with an agent');
+  } else if (aiResponse.includes('document') || aiResponse.includes('checklist')) {
+    suggestions.push('How long does processing take?', 'What if I\'m missing a document?', 'I\'m ready, connect me');
+  } else {
+    suggestions.push('Tell me more', 'What are the costs?', 'Connect me with an agent');
+  }
+
+  return suggestions.slice(0, 3);
+}
+
+// ── Google Gemini API call ──────────────────────────────────────────────────
+async function callGemini(systemPrompt, messages) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return null;
+
+  try {
+    // Build Gemini conversation format
+    const contents = [];
+
+    // Add system instruction as first user message context
+    contents.push({
+      role: 'user',
+      parts: [{ text: `[SYSTEM INSTRUCTIONS — follow these exactly]\n${systemPrompt}\n\n[END SYSTEM INSTRUCTIONS]\n\nNow respond to the conversation below. Remember: be warm, professional, specific, and ask ONE question at a time. Always suggest 2-3 quick reply options at the end of your response in this format:\n**Quick replies:** option1 | option2 | option3` }]
+    });
+    contents.push({
+      role: 'model',
+      parts: [{ text: 'Understood. I will follow these instructions exactly, be warm and professional, give specific visa/travel advice, ask one question at a time, and suggest quick replies.' }]
+    });
+
+    // Add conversation history
+    for (const msg of messages) {
+      contents.push({
+        role: msg.role === 'user' ? 'user' : 'model',
+        parts: [{ text: msg.content }],
+      });
+    }
+
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents,
+          generationConfig: {
+            temperature: 0.8,
+            topP: 0.95,
+            maxOutputTokens: 1500,
+          },
+          safetySettings: [
+            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+          ],
+        }),
+      }
+    );
+
+    const data = await res.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (text) {
+      console.log('[Gemini] Response received successfully');
+      return text;
+    }
+    console.error('[Gemini] No text in response:', JSON.stringify(data).substring(0, 200));
+    return null;
+  } catch (err) {
+    console.error('[Gemini] Error:', err.message);
+    return null;
+  }
+}
+
+// ── Claude API call ─────────────────────────────────────────────────────────
+async function callClaude(systemPrompt, messages) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return null;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1500,
+        system: systemPrompt,
+        messages: messages.map(m => ({ role: m.role, content: m.content })),
+      }),
+    });
+    const data = await res.json();
+    if (data.content?.[0]?.text) {
+      console.log('[Claude] Response received successfully');
+      return data.content[0].text;
+    }
+    return null;
+  } catch (err) {
+    console.error('[Claude] Error:', err.message);
+    return null;
+  }
+}
+
+// ── Main chat function with fallback chain ──────────────────────────────────
 async function chat(messages, context) {
   const systemPrompt = buildSystemPrompt(context);
 
-  // Try Claude API first for maximum intelligence
-  if (process.env.ANTHROPIC_API_KEY) {
-    try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': process.env.ANTHROPIC_API_KEY,
-          'anthropic-version': '2023-06-01',
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1500,
-          system: systemPrompt,
-          messages: messages.map(m => ({ role: m.role, content: m.content })),
-        }),
-      });
-      const data = await res.json();
-      if (data.content?.[0]?.text) {
-        return { content: data.content[0].text, updates: {} };
-      }
-    } catch (err) {
-      console.error('Claude API error, using built-in engine:', err.message);
-    }
+  // Try AI providers in order: Gemini (free) → Claude → Built-in engine
+  let aiText = null;
+  let provider = 'built-in';
+
+  // 1. Try Google Gemini (free, fast)
+  aiText = await callGemini(systemPrompt, messages);
+  if (aiText) provider = 'gemini';
+
+  // 2. Try Claude (if Gemini fails)
+  if (!aiText) {
+    aiText = await callClaude(systemPrompt, messages);
+    if (aiText) provider = 'claude';
   }
 
-  // Fallback to built-in engine (enhanced with visa knowledge)
-  return generateResponse(messages, context);
+  // 3. Fallback to built-in engine
+  if (aiText) {
+    // Extract suggested replies from AI response
+    let suggestions = [];
+    const quickMatch = aiText.match(/\*\*Quick replies?:\*\*\s*(.+)/i);
+    if (quickMatch) {
+      suggestions = quickMatch[1].split('|').map(s => s.trim()).filter(Boolean);
+      // Remove the quick replies line from the main response
+      aiText = aiText.replace(/\*\*Quick replies?:\*\*\s*.+/i, '').trim();
+    }
+
+    if (suggestions.length === 0) {
+      suggestions = generateSuggestions(context, aiText);
+    }
+
+    return { content: aiText, updates: {}, suggestions, provider };
+  }
+
+  // Built-in engine fallback
+  const result = await generateResponse(messages, context);
+  result.suggestions = generateSuggestions(context, result.content);
+  result.provider = 'built-in';
+  return result;
 }
 
 module.exports = { chat, VISA_DB, VISA_KNOWLEDGE, findCountries, extractFromTo, getVisaInfo, getAllCountries, searchKnowledge };

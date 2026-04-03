@@ -4,5 +4,8 @@ nixPkgs = ["nodejs_20"]
 [phases.install]
 cmds = ["cd server && npm install"]
 
+[phases.build]
+cmds = ["echo 'Server-only deploy, no build needed'"]
+
 [start]
 cmd = "cd server && npm run migrate && npm run seed && npm start"

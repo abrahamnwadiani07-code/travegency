@@ -1,0 +1,59 @@
+.auth-page {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  padding: 2rem;
+  background: radial-gradient(ellipse at 50% 30%, rgba(212,168,83,0.05) 0%, transparent 50%);
+}
+
+.auth-card {
+  width: 100%; max-width: 420px;
+  background: var(--bg2); border: 1px solid var(--offwhite3);
+  border-radius: 16px; padding: 2.5rem;
+}
+
+.auth-logo {
+  display: block; text-align: center;
+  font-size: 20px; font-weight: 700; letter-spacing: 3px;
+  color: var(--gold); margin-bottom: 2rem;
+  text-decoration: none;
+}
+
+.auth-title { font-size: 22px; color: var(--ink); margin-bottom: 0.3rem; text-align: center; }
+.auth-sub { font-size: 14px; color: var(--muted); text-align: center; margin-bottom: 1.5rem; }
+
+.auth-form { display: flex; flex-direction: column; gap: 1rem; }
+.auth-form .fg input { background: var(--bg); }
+
+.auth-extras { display: flex; justify-content: flex-end; }
+.auth-forgot { font-size: 13px; color: var(--gold); text-decoration: none; }
+.auth-forgot:hover { text-decoration: underline; }
+
+.auth-submit {
+  padding: 12px;
+  background: var(--gold); color: var(--bg);
+  border: none; border-radius: var(--radius-sm);
+  font-family: 'Outfit', sans-serif;
+  font-size: 15px; font-weight: 600;
+  cursor: pointer; transition: background 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.auth-submit:hover { background: var(--gold2); }
+.auth-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.auth-switch {
+  text-align: center; margin-top: 1.5rem;
+  font-size: 14px; color: var(--muted);
+}
+.auth-switch a { color: var(--gold); font-weight: 500; }
+
+.auth-error {
+  padding: 10px 14px; border-radius: var(--radius-sm);
+  background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2);
+  color: #ef4444; font-size: 13px;
+  margin-bottom: 0.5rem;
+}
+
+.auth-spinner {
+  display: inline-block; width: 20px; height: 20px;
+  border: 2px solid rgba(0,0,0,0.2); border-top-color: var(--bg);
+  border-radius: 50%; animation: spin 0.6s linear infinite;
+}

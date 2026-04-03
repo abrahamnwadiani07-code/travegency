@@ -1,0 +1,61 @@
+/* ══ Agent Dashboard extras ═══════════════════════════════════════════════ */
+
+.agent-quick-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+  margin-bottom: 1.5rem;
+}
+.aqs-item {
+  text-align: center; padding: 10px 6px;
+  background: var(--bg); border-radius: var(--radius-sm);
+  border: 1px solid var(--offwhite3);
+}
+.aqs-val { font-size: 16px; font-weight: 700; color: var(--ink); }
+.aqs-lbl { font-size: 10px; color: var(--muted); }
+
+/* ── Agent chat layout ──────────────────────────────────────────────────── */
+.agent-chat-layout { display: flex; gap: 1rem; }
+.agent-booking-list {
+  width: 220px; min-width: 220px;
+  background: var(--bg2); border: 1px solid var(--offwhite3);
+  border-radius: var(--radius); overflow-y: auto;
+  max-height: 500px;
+}
+.abl-title { padding: 10px 14px; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--offwhite3); }
+.abl-item {
+  padding: 10px 14px; cursor: pointer; border-bottom: 1px solid var(--offwhite3);
+  transition: background 0.15s;
+}
+.abl-item:hover { background: var(--offwhite2); }
+.abl-item-active { background: rgba(212,168,83,0.08); border-left: 3px solid var(--gold); }
+.abl-dest { font-size: 13px; font-weight: 500; color: var(--ink); }
+.abl-name { font-size: 11px; color: var(--muted); margin: 2px 0 4px; }
+
+/* ── Earnings ───────────────────────────────────────────────────────────── */
+.earnings-note {
+  display: flex; align-items: flex-start; gap: 10px;
+  margin-top: 1.5rem; padding: 1rem;
+  background: rgba(212,168,83,0.05); border: 1px solid rgba(212,168,83,0.15);
+  border-radius: var(--radius-sm);
+  font-size: 13px; color: var(--muted);
+}
+
+/* ── Agent tips ─────────────────────────────────────────────────────────── */
+.agent-tips {
+  padding: 1.5rem; background: var(--bg2);
+  border: 1px solid var(--offwhite3); border-radius: var(--radius);
+}
+.at-title { font-size: 17px; color: var(--ink); margin-bottom: 1rem; }
+.at-tip { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--offwhite3); }
+.at-tip:last-child { border-bottom: none; }
+.at-num {
+  width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%;
+  background: var(--offwhite2); color: var(--gold);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700;
+}
+.at-text { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+@media (max-width: 768px) {
+  .agent-chat-layout { flex-direction: column; }
+  .agent-booking-list { width: 100%; max-height: 200px; }
+}

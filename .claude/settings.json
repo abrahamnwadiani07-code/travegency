@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(where psql:*)",
+      "Bash(where pg_isready)",
+      "Bash(pg_isready)",
+      "Read(//c/Program Files/PostgreSQL/18/bin/**)",
+      "Read(//c/Program Files/PostgreSQL/18/data/**)",
+      "Bash(grep -v \"^$\")",
+      "Bash(npm install:*)"
+    ]
+  }
+}

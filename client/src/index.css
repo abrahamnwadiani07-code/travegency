@@ -1,0 +1,170 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   Tragency — Global Styles
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --bg:        #0a0a0f;
+  --bg2:       #111118;
+  --bg3:       #1a1a24;
+  --ink:       #ffffff;
+  --ink2:      #e0e0e8;
+  --ink3:      #a0a0b0;
+  --muted:     #666680;
+  --offwhite:  #f5f5f7;
+  --offwhite2: rgba(255,255,255,0.08);
+  --offwhite3: rgba(255,255,255,0.12);
+  --gold:      #d4a853;
+  --gold2:     #c9952e;
+  --accent:    #6366f1;
+  --success:   #22c55e;
+  --danger:    #ef4444;
+  --info:      #3b82f6;
+  --warning:   #f59e0b;
+  --radius:    12px;
+  --radius-sm: 8px;
+  --shadow:    0 4px 24px rgba(0,0,0,0.3);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--ink2);
+  line-height: 1.6;
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.serif { font-family: 'DM Serif Display', serif; }
+
+a { color: var(--gold); text-decoration: none; }
+a:hover { color: var(--gold2); }
+
+img { max-width: 100%; }
+
+/* ── Buttons ────────────────────────────────────────────────────────────────── */
+.btn-hero-primary {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 14px 32px;
+  background: var(--gold);
+  color: var(--bg);
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600; font-size: 15px;
+  border: none; border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+.btn-hero-primary:hover { background: var(--gold2); color: var(--bg); transform: translateY(-1px); }
+.btn-hero-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.btn-hero-secondary {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 14px 32px;
+  background: transparent;
+  color: var(--ink2);
+  font-family: 'Outfit', sans-serif;
+  font-weight: 500; font-size: 15px;
+  border: 1px solid var(--offwhite3);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+.btn-hero-secondary:hover { border-color: var(--gold); color: var(--gold); }
+
+.btn-ghost {
+  background: none; border: none; color: var(--muted);
+  font-family: 'Outfit', sans-serif; font-size: 14px;
+  cursor: pointer; padding: 8px 16px;
+  transition: color 0.2s;
+  text-decoration: none;
+}
+.btn-ghost:hover { color: var(--ink2); }
+
+.btn-sm {
+  padding: 6px 14px; font-size: 12px; font-weight: 500;
+  border: 1px solid var(--offwhite3); border-radius: 6px;
+  background: transparent; color: var(--ink3);
+  cursor: pointer; font-family: 'Outfit', sans-serif;
+  transition: all 0.15s;
+}
+.btn-sm:hover { border-color: var(--gold); color: var(--gold); }
+.btn-primary { background: var(--gold); color: var(--bg); border-color: var(--gold); }
+.btn-primary:hover { background: var(--gold2); }
+.btn-pay { border-color: var(--success); color: var(--success); }
+.btn-cancel { border-color: var(--danger); color: var(--danger); }
+.btn-msg { border-color: var(--info); color: var(--info); }
+.btn-complete-agent { border-color: var(--success); color: var(--success); }
+
+/* ── Pills / badges ─────────────────────────────────────────────────────────── */
+.pill {
+  display: inline-block; padding: 3px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 500; text-transform: capitalize;
+  white-space: nowrap;
+}
+.pill-pending    { background: rgba(245,158,11,0.15); color: #f59e0b; }
+.pill-info       { background: rgba(59,130,246,0.15); color: #3b82f6; }
+.pill-confirmed  { background: rgba(34,197,94,0.15);  color: #22c55e; }
+.pill-completed  { background: rgba(34,197,94,0.2);   color: #22c55e; }
+.pill-cancelled  { background: rgba(239,68,68,0.15);  color: #ef4444; }
+
+/* ── Tags ───────────────────────────────────────────────────────────────────── */
+.section-tag, .hero-tag, .ob-step-tag {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 16px; border-radius: 20px;
+  background: var(--offwhite2);
+  color: var(--gold); font-size: 13px; font-weight: 500;
+  margin-bottom: 1rem;
+}
+.hero-tag-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+
+.section-title { font-size: clamp(1.8rem, 4vw, 2.4rem); color: var(--ink); margin-bottom: 0.5rem; }
+.section-sub   { color: var(--muted); font-size: 16px; max-width: 600px; margin: 0 auto; }
+
+/* ── Animations ─────────────────────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.anim-fadeUp { animation: fadeUp 0.5s ease forwards; opacity: 0; }
+
+/* ── Spinner ────────────────────────────────────────────────────────────────── */
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Form fields ────────────────────────────────────────────────────────────── */
+.fg { display: flex; flex-direction: column; gap: 6px; }
+.fg label { font-size: 13px; font-weight: 500; color: var(--ink3); }
+.fg input, .fg select, .fg textarea {
+  padding: 10px 14px;
+  background: var(--bg);
+  border: 1px solid var(--offwhite3);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.fg input:focus, .fg select:focus, .fg textarea:focus {
+  border-color: var(--gold);
+}
+.fg textarea { resize: vertical; }
+
+/* ── Ref code ───────────────────────────────────────────────────────────────── */
+.ref-code {
+  font-family: 'Outfit', monospace; font-size: 12px; font-weight: 600;
+  background: var(--offwhite2); padding: 3px 8px; border-radius: 4px;
+  color: var(--gold);
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .dash { flex-direction: column; }
+  .dash-sidebar { width: 100%; position: relative; height: auto; border-right: none; border-bottom: 1px solid var(--offwhite3); }
+}

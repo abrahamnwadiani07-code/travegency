@@ -1,0 +1,661 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   AIChat — AI Travel Consultant Chat Page
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Layout ──────────────────────────────────────────────────────────────────── */
+.aichat {
+  display: flex;
+  height: calc(100vh - 64px);
+  background: var(--bg);
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── Main Chat Column ────────────────────────────────────────────────────────── */
+.aichat-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* ── Messages Area ───────────────────────────────────────────────────────────── */
+.aichat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  scroll-behavior: smooth;
+}
+
+.aichat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+.aichat-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+.aichat-messages::-webkit-scrollbar-thumb {
+  background: var(--offwhite2);
+  border-radius: 3px;
+}
+.aichat-messages::-webkit-scrollbar-thumb:hover {
+  background: var(--offwhite3);
+}
+
+/* ── Welcome Screen ──────────────────────────────────────────────────────────── */
+.aichat-welcome {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 24px;
+  max-width: 560px;
+  margin: 0 auto;
+  gap: 16px;
+}
+
+.aichat-welcome-icon {
+  font-size: 56px;
+  margin-bottom: 8px;
+  animation: welcomePulse 3s ease-in-out infinite;
+}
+
+@keyframes welcomePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+.aichat-welcome h1 {
+  font-size: 32px;
+  color: var(--ink);
+  line-height: 1.25;
+}
+
+.aichat-welcome p {
+  color: var(--ink3);
+  font-size: 15px;
+  line-height: 1.7;
+  max-width: 480px;
+}
+
+.aichat-welcome-paths {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.aichat-path-tag {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border: 1px solid;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s;
+}
+
+.aichat-path-tag:hover {
+  background: var(--offwhite2);
+}
+
+/* ── Message Rows ────────────────────────────────────────────────────────────── */
+.aichat-msg {
+  display: flex;
+  gap: 12px;
+  max-width: 720px;
+  animation: msgIn 0.3s ease-out;
+}
+
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.aichat-msg--user {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.aichat-msg--assistant {
+  align-self: flex-start;
+}
+
+/* ── Avatar ──────────────────────────────────────────────────────────────────── */
+.aichat-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.aichat-avatar span {
+  font-family: 'DM Serif Display', serif;
+  font-size: 16px;
+  color: var(--bg);
+  font-weight: 700;
+}
+
+/* ── Chat Bubbles ────────────────────────────────────────────────────────────── */
+.aichat-bubble {
+  padding: 14px 18px;
+  border-radius: var(--radius);
+  line-height: 1.65;
+  font-size: 14.5px;
+}
+
+.aichat-msg--assistant .aichat-bubble {
+  background: var(--bg2);
+  color: var(--ink2);
+  border-bottom-left-radius: 4px;
+  border: 1px solid var(--offwhite2);
+}
+
+.aichat-msg--user .aichat-bubble {
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  color: var(--bg);
+  border-bottom-right-radius: 4px;
+  font-weight: 500;
+}
+
+/* ── Markdown-ish content inside bubbles ─────────────────────────────────────── */
+.aichat-bubble .chat-p {
+  margin: 0 0 4px;
+}
+
+.aichat-bubble .chat-p:last-child {
+  margin-bottom: 0;
+}
+
+.aichat-bubble .chat-spacer {
+  height: 8px;
+}
+
+.aichat-bubble .chat-ul,
+.aichat-bubble .chat-ol {
+  margin: 6px 0;
+  padding-left: 20px;
+}
+
+.aichat-bubble .chat-ul li,
+.aichat-bubble .chat-ol li {
+  margin-bottom: 4px;
+}
+
+.aichat-bubble strong {
+  font-weight: 600;
+  color: inherit;
+}
+
+.aichat-msg--assistant .aichat-bubble strong {
+  color: var(--ink);
+}
+
+/* ── Typing Indicator ────────────────────────────────────────────────────────── */
+.aichat-typing {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 16px 22px;
+}
+
+.aichat-typing .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+  animation: typingBounce 1.4s ease-in-out infinite;
+}
+
+.aichat-typing .dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.aichat-typing .dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typingBounce {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
+}
+
+/* ── Ready Bar (above input) ─────────────────────────────────────────────────── */
+.aichat-ready-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 24px;
+  background: linear-gradient(90deg, rgba(212, 168, 83, 0.1), rgba(212, 168, 83, 0.05));
+  border-top: 1px solid rgba(212, 168, 83, 0.25);
+  animation: readySlide 0.4s ease-out;
+}
+
+@keyframes readySlide {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.aichat-ready-bar p {
+  flex: 1;
+  font-size: 14px;
+  color: var(--gold);
+  font-weight: 500;
+}
+
+.aichat-ready-btn {
+  padding: 10px 24px;
+  background: var(--gold);
+  color: var(--bg);
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.aichat-ready-btn:hover {
+  background: var(--gold2);
+  transform: translateY(-1px);
+}
+
+/* ── Input Bar ───────────────────────────────────────────────────────────────── */
+.aichat-input-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  background: var(--bg2);
+  border-top: 1px solid var(--offwhite2);
+}
+
+.aichat-input {
+  flex: 1;
+  padding: 12px 16px;
+  background: var(--bg3);
+  color: var(--ink);
+  border: 1px solid var(--offwhite2);
+  border-radius: var(--radius-sm);
+  font-family: 'Outfit', sans-serif;
+  font-size: 14.5px;
+  resize: none;
+  outline: none;
+  line-height: 1.5;
+  max-height: 120px;
+  transition: border-color 0.2s;
+}
+
+.aichat-input::placeholder {
+  color: var(--muted);
+}
+
+.aichat-input:focus {
+  border-color: var(--gold);
+}
+
+.aichat-input:disabled {
+  opacity: 0.6;
+}
+
+.aichat-send {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gold);
+  color: var(--bg);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.aichat-send:hover:not(:disabled) {
+  background: var(--gold2);
+  transform: translateY(-1px);
+}
+
+.aichat-send:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ── Mobile Panel Toggle ─────────────────────────────────────────────────────── */
+.aichat-panel-toggle {
+  display: none;
+  position: fixed;
+  bottom: 90px;
+  right: 16px;
+  z-index: 100;
+  padding: 10px 16px;
+  background: var(--bg3);
+  color: var(--ink2);
+  border: 1px solid var(--offwhite3);
+  border-radius: 24px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  transition: all 0.2s;
+}
+
+.aichat-panel-toggle:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* ── Side Panel ──────────────────────────────────────────────────────────────── */
+.aichat-panel {
+  width: 320px;
+  background: var(--bg2);
+  border-left: 1px solid var(--offwhite2);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.aichat-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 20px 0;
+}
+
+.aichat-panel-header h3 {
+  font-size: 20px;
+  color: var(--ink);
+}
+
+.aichat-panel-close {
+  display: none;
+  width: 32px;
+  height: 32px;
+  background: var(--bg3);
+  color: var(--ink3);
+  border: 1px solid var(--offwhite2);
+  border-radius: 50%;
+  font-size: 14px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.aichat-panel-close:hover {
+  color: var(--ink);
+  border-color: var(--offwhite3);
+}
+
+/* ── Panel Empty State ───────────────────────────────────────────────────────── */
+.aichat-panel-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  gap: 12px;
+}
+
+.aichat-panel-empty-icon {
+  font-size: 36px;
+  opacity: 0.6;
+}
+
+.aichat-panel-empty p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* ── Panel Body ──────────────────────────────────────────────────────────────── */
+.aichat-panel-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Detail Items ────────────────────────────────────────────────────────────── */
+.aichat-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.aichat-detail label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.aichat-detail-val {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.aichat-flag {
+  font-size: 22px;
+}
+
+/* ── Route Visual ────────────────────────────────────────────────────────────── */
+.aichat-route {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 14px 16px;
+  background: var(--bg3);
+  border-radius: var(--radius-sm);
+  justify-content: center;
+  font-size: 24px;
+}
+
+.aichat-route-line {
+  flex: 1;
+  height: 2px;
+  background: linear-gradient(90deg, var(--offwhite2), var(--gold), var(--offwhite2));
+  max-width: 60px;
+}
+
+.aichat-route-plane {
+  margin: 0 4px;
+  animation: planeFloat 2s ease-in-out infinite;
+}
+
+@keyframes planeFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+/* ── Path Badge ──────────────────────────────────────────────────────────────── */
+.aichat-path-badge {
+  padding: 6px 12px;
+  border: 1px solid;
+  border-radius: var(--radius-sm);
+  background: var(--bg3);
+  font-size: 14px;
+  display: inline-flex;
+  width: fit-content;
+}
+
+/* ── Checklist ───────────────────────────────────────────────────────────────── */
+.aichat-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.aichat-checklist label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.aichat-checklist ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.aichat-checklist li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13.5px;
+  color: var(--ink2);
+  line-height: 1.5;
+  padding: 8px 12px;
+  background: var(--bg3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--offwhite2);
+  animation: checkIn 0.3s ease-out;
+}
+
+@keyframes checkIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.aichat-check-icon {
+  color: var(--success);
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ── Panel CTA ───────────────────────────────────────────────────────────────── */
+.aichat-panel-cta {
+  width: 100%;
+  padding: 14px;
+  background: var(--gold);
+  color: var(--bg);
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 4px;
+}
+
+.aichat-panel-cta:hover {
+  background: var(--gold2);
+  transform: translateY(-1px);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   Responsive
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 900px) {
+  .aichat-panel {
+    position: fixed;
+    top: 64px;
+    right: 0;
+    bottom: 0;
+    width: 320px;
+    z-index: 200;
+    transform: translateX(100%);
+    opacity: 0;
+    box-shadow: -8px 0 32px rgba(0, 0, 0, 0.5);
+  }
+
+  .aichat-panel.open {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  .aichat-panel-toggle {
+    display: flex;
+  }
+
+  .aichat-panel-close {
+    display: flex;
+  }
+}
+
+@media (max-width: 480px) {
+  .aichat-messages {
+    padding: 20px 14px;
+  }
+
+  .aichat-input-bar {
+    padding: 12px 14px;
+  }
+
+  .aichat-msg {
+    gap: 8px;
+  }
+
+  .aichat-bubble {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+
+  .aichat-avatar {
+    width: 30px;
+    height: 30px;
+  }
+
+  .aichat-avatar span {
+    font-size: 13px;
+  }
+
+  .aichat-welcome h1 {
+    font-size: 24px;
+  }
+
+  .aichat-panel {
+    width: 100%;
+  }
+
+  .aichat-ready-bar {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+
+  .aichat-ready-bar p {
+    font-size: 13px;
+  }
+}

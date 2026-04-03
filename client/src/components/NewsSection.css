@@ -1,0 +1,225 @@
+/* ══ News Section (Homepage) ═══════════════════════════════════════════════ */
+.news-section {
+  padding: 5rem 2rem;
+  background: var(--bg2);
+}
+.ns-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Header */
+.ns-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.2rem;
+}
+.ns-title {
+  font-size: clamp(1.4rem, 3vw, 1.8rem);
+  color: var(--ink);
+}
+.ns-view-all {
+  font-size: 14px;
+  color: var(--gold);
+  text-decoration: none;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+.ns-view-all:hover {
+  color: var(--gold2);
+}
+
+/* Category pills */
+.ns-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+.ns-pill {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--pill-color);
+  background: color-mix(in srgb, var(--pill-color) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pill-color) 25%, transparent);
+}
+
+/* Horizontal scroll */
+.ns-scroll {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 1rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--offwhite3) transparent;
+}
+.ns-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+.ns-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.ns-scroll::-webkit-scrollbar-thumb {
+  background: var(--offwhite3);
+  border-radius: 3px;
+}
+
+/* Card */
+.ns-card {
+  flex: 0 0 300px;
+  scroll-snap-align: start;
+  border-radius: var(--radius);
+  background: var(--bg);
+  border: 1px solid var(--offwhite3);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.25s;
+  display: flex;
+  flex-direction: column;
+}
+.ns-card:hover {
+  border-color: rgba(212, 168, 83, 0.3);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+.ns-featured {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px var(--gold);
+}
+
+/* Card image */
+.ns-card-img {
+  height: 160px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+.ns-card-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+}
+
+/* Card body */
+.ns-card-body {
+  padding: 1rem 1.2rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.ns-card-title {
+  font-size: 16px;
+  color: var(--ink);
+  line-height: 1.35;
+  margin-bottom: 0.4rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ns-card-summary {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: auto;
+}
+.ns-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 0.8rem;
+  font-size: 12px;
+  color: var(--muted);
+}
+.ns-card-source {
+  font-weight: 600;
+  color: var(--ink3);
+}
+.ns-card-dot {
+  opacity: 0.5;
+}
+
+/* CTA card */
+.ns-card-cta {
+  flex: 0 0 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  border: 1px dashed var(--offwhite3);
+}
+.ns-card-cta:hover {
+  border-color: var(--gold);
+  border-style: solid;
+}
+.ns-cta-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.ns-cta-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(212, 168, 83, 0.1);
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+.ns-cta-text {
+  font-size: 13px;
+  color: var(--gold);
+  font-weight: 600;
+}
+
+/* Loading */
+.ns-loading {
+  display: flex;
+  justify-content: center;
+  padding: 3rem;
+}
+.ns-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--offwhite3);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: ns-spin 0.8s linear infinite;
+}
+@keyframes ns-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ══ Responsive ═══════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  .ns-card {
+    flex: 0 0 260px;
+  }
+  .ns-card-cta {
+    flex: 0 0 140px;
+  }
+  .ns-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}

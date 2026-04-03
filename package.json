@@ -1,0 +1,21 @@
+{
+  "name": "tragency",
+  "version": "1.0.0",
+  "description": "Tragency — Secure travel marketplace for Africa",
+  "private": true,
+  "scripts": {
+    "server:install": "cd server && npm install",
+    "client:install": "cd client && npm install",
+    "install:all": "npm run server:install && npm run client:install",
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm start",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "migrate": "cd server && npm run migrate",
+    "seed": "cd server && npm run seed",
+    "build": "cd client && npm run build",
+    "start": "cd server && npm start"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

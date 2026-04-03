@@ -75,6 +75,18 @@ export default function AdminDashboard() {
   const [grantForm, setGrantForm] = useState({ userId: '', plan: 'premium', days: 30 });
   const [grantMsg, setGrantMsg] = useState('');
 
+  // Revenue tab
+  const [revenue, setRevenue] = useState(null);
+  const [stripeStats, setStripeStats] = useState(null);
+  const [revenueLoading, setRevenueLoading] = useState(false);
+
+  // Pricing tab
+  const [pricingConfig, setPricingConfig] = useState(null);
+  const [pricingLoading, setPricingLoading] = useState(false);
+  const [editCountry, setEditCountry] = useState(null);
+  const [editPrices, setEditPrices] = useState({});
+  const [pricingMsg, setPricingMsg] = useState('');
+
   // KYC tab
   const [kycAgents, setKycAgents] = useState([]);
   const [kycLoading, setKycLoading] = useState(false);
@@ -205,6 +217,66 @@ export default function AdminDashboard() {
     } catch (e) { alert(e.message); }
   }
 
+  // ── Load revenue ───────────────────────────────────────────────────────
+  async function loadRevenue() {
+    setRevenueLoading(true);
+    try {
+      const token = localStorage.getItem('tragency_token');
+      const [revRes, stripeRes] = await Promise.all([
+        fetch(`${API_BASE}/admin/revenue`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API_BASE}/admin/stripe/stats`, { headers: { Authorization: `Bearer ${token}` } }),
+      ]);
+      const revData = await revRes.json();
+      const stripeData = await stripeRes.json();
+      setRevenue(revData);
+      setStripeStats(stripeData);
+    } catch (e) { console.error(e); }
+    finally { setRevenueLoading(false); }
+  }
+
+  // ── Load pricing config ───────────────────────────────────────────────
+  async function loadPricing() {
+    setPricingLoading(true);
+    try {
+      const token = localStorage.getItem('tragency_token');
+      const res = await fetch(`${API_BASE}/admin/pricing`, { headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
+      setPricingConfig(data.pricing);
+    } catch (e) { console.error(e); }
+    finally { setPricingLoading(false); }
+  }
+
+  async function savePricing(country) {
+    setPricingMsg('');
+    try {
+      const token = localStorage.getItem('tragency_token');
+      const res = await fetch(`${API_BASE}/admin/pricing/${encodeURIComponent(country)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(editPrices),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setPricingMsg(`Pricing updated for ${country}`);
+      setEditCountry(null);
+      loadPricing();
+    } catch (e) { setPricingMsg(e.message); }
+  }
+
+  async function handleRefund(chargeId) {
+    if (!window.confirm('Issue a full refund for this charge?')) return;
+    try {
+      const token = localStorage.getItem('tragency_token');
+      const res = await fetch(`${API_BASE}/admin/refund/${chargeId}`, {
+        method: 'POST', headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      alert(`Refund issued: ${data.refund.amount} ${data.refund.currency}`);
+      loadRevenue();
+    } catch (e) { alert(e.message); }
+  }
+
   // ── Load KYC agents ────────────────────────────────────────────────────
   async function loadKycAgents() {
     setKycLoading(true);
@@ -286,6 +358,8 @@ export default function AdminDashboard() {
     if (id === 'users' && users.length === 0) loadUsers('', '');
     if (id === 'bookings' && !bookingsLoaded) searchBookings('', '');
     if (id === 'subscriptions' && subscriptions.length === 0) loadSubscriptions();
+    if (id === 'revenue' && !revenue) loadRevenue();
+    if (id === 'pricing' && !pricingConfig) loadPricing();
     if (id === 'kyc' && kycAgents.length === 0) loadKycAgents();
   }
 
@@ -309,6 +383,8 @@ export default function AdminDashboard() {
     { id: 'agents',        label: 'Agents',         icon: '\u{1F91D}', badge: pendingAgents },
     { id: 'kyc',           label: 'KYC Review',     icon: '\u{1F4DD}' },
     { id: 'subscriptions', label: 'Subscriptions',  icon: '\u{1F451}' },
+    { id: 'revenue',       label: 'Revenue',         icon: '\u{1F4B5}' },
+    { id: 'pricing',       label: 'Pricing',         icon: '\u{1F3F7}' },
     { id: 'users',         label: 'Users',          icon: '\u{1F465}' },
     { id: 'settings',      label: 'Settings',       icon: '\u2699\uFE0F' },
     { id: 'notifications', label: 'Notifications',  icon: '\u{1F514}', badge: unreadCount },
@@ -900,6 +976,123 @@ export default function AdminDashboard() {
                     {subscriptions.length === 0 && (
                       <tr><td colSpan={6} style={{ textAlign: 'center', padding: 32, color: 'var(--muted)' }}>No subscriptions yet</td></tr>
                     )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ═══ REVENUE ═══════════════════════════════════════════════ */}
+        {!loading && tab === 'revenue' && (
+          <div className="dash-section anim-fadeUp">
+            <div className="dash-section-head">
+              <div><h2 className="serif">Revenue & Payments</h2><p className="dash-section-sub">Track income, Stripe balance, and issue refunds</p></div>
+              <button className="btn-ghost" onClick={loadRevenue}>Refresh</button>
+            </div>
+
+            {revenueLoading ? <div className="dash-loading"><div className="dl-spinner" /> Loading...</div> : revenue && (
+              <>
+                <div className="stat-grid" style={{ marginBottom: 20 }}>
+                  <StatCard label="Total Revenue" value={`${revenue.revenue?.total?.count || 0} payments`} sub={`All time`} accent />
+                  <StatCard label="This Month" value={`${revenue.revenue?.monthly?.count || 0} payments`} />
+                  {revenue.revenue?.byPlan?.map(p => (
+                    <StatCard key={p.plan} label={`${p.plan?.toUpperCase()} subscribers`} value={p.count} sub={`Total: ${Number(p.total).toLocaleString()}`} />
+                  ))}
+                </div>
+
+                {/* Stripe Balance */}
+                {stripeStats?.enabled && (
+                  <div style={{ padding: 16, background: 'var(--bg2)', borderRadius: 'var(--radius)', border: '1px solid var(--offwhite3)', marginBottom: 20 }}>
+                    <h4 className="serif" style={{ marginBottom: 12 }}>Stripe Balance</h4>
+                    <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+                      {stripeStats.balance?.available?.map((b, i) => (
+                        <div key={i}><span style={{ color: 'var(--success)', fontWeight: 700, fontSize: 18 }}>{b.currency} {b.amount.toLocaleString()}</span><br/><span style={{ fontSize: 12, color: 'var(--muted)' }}>Available</span></div>
+                      ))}
+                      {stripeStats.balance?.pending?.map((b, i) => (
+                        <div key={i}><span style={{ color: 'var(--gold)', fontWeight: 700, fontSize: 18 }}>{b.currency} {b.amount.toLocaleString()}</span><br/><span style={{ fontSize: 12, color: 'var(--muted)' }}>Pending</span></div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Revenue by Currency */}
+                {revenue.revenue?.byCurrency?.length > 0 && (
+                  <div style={{ padding: 16, background: 'var(--bg2)', borderRadius: 'var(--radius)', border: '1px solid var(--offwhite3)', marginBottom: 20 }}>
+                    <h4 className="serif" style={{ marginBottom: 12 }}>Revenue by Currency</h4>
+                    <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                      {revenue.revenue.byCurrency.map((c, i) => (
+                        <div key={i} style={{ padding: '8px 16px', background: 'var(--bg)', borderRadius: 8, border: '1px solid var(--offwhite2)' }}>
+                          <strong style={{ color: 'var(--gold)' }}>{c.currency} {Number(c.total).toLocaleString()}</strong>
+                          <span style={{ marginLeft: 8, fontSize: 12, color: 'var(--muted)' }}>({c.count} payments)</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Recent Payments */}
+                <div className="table-wrap">
+                  <table className="admin-table">
+                    <thead><tr><th>User</th><th>Plan</th><th>Amount</th><th>Currency</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+                    <tbody>
+                      {(revenue.recentPayments || []).map(p => (
+                        <tr key={p.id}>
+                          <td><strong>{p.first_name} {p.last_name}</strong><br/><span style={{ fontSize: 11, color: 'var(--muted)' }}>{p.email}</span></td>
+                          <td><span className={`pill ${p.plan === 'gold' ? 'pill-completed' : 'pill-info'}`}>{p.plan}</span></td>
+                          <td style={{ fontWeight: 600 }}>{Number(p.amount).toLocaleString()}</td>
+                          <td>{p.currency}</td>
+                          <td><span className={`pill ${p.status === 'active' ? 'pill-completed' : 'pill-cancelled'}`}>{p.status}</span></td>
+                          <td style={{ fontSize: 12 }}>{new Date(p.created_at).toLocaleDateString()}</td>
+                          <td>{p.gateway_ref && p.gateway_ref.startsWith('ch_') && (
+                            <button className="btn-sm btn-sm-danger" onClick={() => handleRefund(p.gateway_ref)}>Refund</button>
+                          )}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ═══ PRICING ══════════════════════════════════════════════════ */}
+        {!loading && tab === 'pricing' && (
+          <div className="dash-section anim-fadeUp">
+            <div className="dash-section-head">
+              <div><h2 className="serif">Pricing Management</h2><p className="dash-section-sub">Set location-based pricing for 40+ countries</p></div>
+              <button className="btn-ghost" onClick={loadPricing}>Refresh</button>
+            </div>
+
+            {pricingMsg && <div style={{ padding: 10, background: pricingMsg.includes('updated') ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)', borderRadius: 8, marginBottom: 16, fontSize: 13, color: pricingMsg.includes('updated') ? '#10b981' : '#ef4444' }}>{pricingMsg}</div>}
+
+            {pricingLoading ? <div className="dash-loading"><div className="dl-spinner" /> Loading...</div> : pricingConfig && (
+              <div className="table-wrap">
+                <table className="admin-table">
+                  <thead><tr><th>Country</th><th>Currency</th><th>Premium</th><th>Gold</th><th>Job Board</th><th>Auto-Apply</th><th>Agent</th><th>Actions</th></tr></thead>
+                  <tbody>
+                    {Object.entries(pricingConfig).map(([country, p]) => (
+                      <tr key={country}>
+                        <td><strong>{country}</strong></td>
+                        <td>{p.symbol} {p.currency}</td>
+                        <td>{editCountry === country ? <input type="number" value={editPrices.premium || ''} onChange={e => setEditPrices(prev => ({ ...prev, premium: Number(e.target.value) }))} style={{ width: 80, padding: 4, background: 'var(--bg)', color: 'var(--ink)', border: '1px solid var(--offwhite3)', borderRadius: 4 }} /> : `${p.symbol}${p.premium.toLocaleString()}`}</td>
+                        <td>{editCountry === country ? <input type="number" value={editPrices.gold || ''} onChange={e => setEditPrices(prev => ({ ...prev, gold: Number(e.target.value) }))} style={{ width: 80, padding: 4, background: 'var(--bg)', color: 'var(--ink)', border: '1px solid var(--offwhite3)', borderRadius: 4 }} /> : `${p.symbol}${p.gold.toLocaleString()}`}</td>
+                        <td>{editCountry === country ? <input type="number" value={editPrices.jobBoard || ''} onChange={e => setEditPrices(prev => ({ ...prev, jobBoard: Number(e.target.value) }))} style={{ width: 80, padding: 4, background: 'var(--bg)', color: 'var(--ink)', border: '1px solid var(--offwhite3)', borderRadius: 4 }} /> : `${p.symbol}${p.jobBoard.toLocaleString()}`}</td>
+                        <td>{editCountry === country ? <input type="number" value={editPrices.jobAutoApply || ''} onChange={e => setEditPrices(prev => ({ ...prev, jobAutoApply: Number(e.target.value) }))} style={{ width: 80, padding: 4, background: 'var(--bg)', color: 'var(--ink)', border: '1px solid var(--offwhite3)', borderRadius: 4 }} /> : `${p.symbol}${p.jobAutoApply.toLocaleString()}`}</td>
+                        <td>{editCountry === country ? <input type="number" value={editPrices.agentPlacement || ''} onChange={e => setEditPrices(prev => ({ ...prev, agentPlacement: Number(e.target.value) }))} style={{ width: 80, padding: 4, background: 'var(--bg)', color: 'var(--ink)', border: '1px solid var(--offwhite3)', borderRadius: 4 }} /> : `${p.symbol}${p.agentPlacement.toLocaleString()}`}</td>
+                        <td>
+                          {editCountry === country ? (
+                            <div style={{ display: 'flex', gap: 6 }}>
+                              <button className="btn-sm btn-sm-success" onClick={() => savePricing(country)}>Save</button>
+                              <button className="btn-sm btn-sm-danger" onClick={() => setEditCountry(null)}>Cancel</button>
+                            </div>
+                          ) : (
+                            <button className="btn-sm btn-sm-warn" onClick={() => { setEditCountry(country); setEditPrices({ ...p }); }}>Edit</button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>

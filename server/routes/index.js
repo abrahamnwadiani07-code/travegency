@@ -128,6 +128,13 @@ router.get('/admin/subscriptions',              authenticate, requireAdmin, admi
 router.post('/admin/subscriptions/grant',       authenticate, requireAdmin, adminCtrl.grantSubscription);
 router.patch('/admin/subscriptions/:id/cancel', authenticate, requireAdmin, adminCtrl.adminCancelSubscription);
 
+// Admin — Revenue & Payments
+router.get('/admin/revenue',                authenticate, requireAdmin, adminCtrl.getRevenue);
+router.get('/admin/pricing',                authenticate, requireAdmin, adminCtrl.getPricingConfig);
+router.patch('/admin/pricing/:country',     authenticate, requireAdmin, adminCtrl.updatePricing);
+router.get('/admin/stripe/stats',           authenticate, requireAdmin, adminCtrl.getStripeStats);
+router.post('/admin/refund/:chargeId',      authenticate, requireAdmin, adminCtrl.issueRefund);
+
 // ══════════════════════════════════════════════════════════════════════════════
 // REVIEWS
 // ══════════════════════════════════════════════════════════════════════════════

@@ -292,8 +292,119 @@ const getNotifications = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+// ══════════════════════════════════════════════════════════════════════════════
+// PAYMENT & REVENUE MANAGEMENT
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ── GET /api/admin/revenue — revenue analytics ──────────────────────────────
+const getRevenue = async (req, res, next) => {
+  try {
+    const [totalRev, monthlyRev, byCurrency, byPlan, recentPayments] = await Promise.all([
+      query(`SELECT COALESCE(SUM(amount), 0) AS total, COUNT(*) AS count FROM subscriptions WHERE status IN ('active', 'expired')`),
+      query(`SELECT COALESCE(SUM(amount), 0) AS total, COUNT(*) AS count FROM subscriptions WHERE created_at > NOW() - INTERVAL '30 days'`),
+      query(`SELECT currency, COALESCE(SUM(amount), 0) AS total, COUNT(*) AS count FROM subscriptions WHERE status IN ('active', 'expired') GROUP BY currency ORDER BY total DESC`),
+      query(`SELECT plan, COUNT(*) AS count, COALESCE(SUM(amount), 0) AS total FROM subscriptions WHERE status = 'active' GROUP BY plan`),
+      query(`
+        SELECT s.id, s.plan, s.amount, s.currency, s.status, s.created_at, s.gateway_ref,
+          u.first_name, u.last_name, u.email, u.country
+        FROM subscriptions s LEFT JOIN users u ON u.id = s.user_id
+        ORDER BY s.created_at DESC LIMIT 50
+      `),
+    ]);
+
+    res.json({
+      revenue: {
+        total: totalRev.rows[0],
+        monthly: monthlyRev.rows[0],
+        byCurrency: byCurrency.rows,
+        byPlan: byPlan.rows,
+      },
+      recentPayments: recentPayments.rows,
+    });
+  } catch (err) { next(err); }
+};
+
+// ── GET /api/admin/pricing — get current pricing config ─────────────────────
+const getPricingConfig = async (req, res, next) => {
+  try {
+    const { PRICING, DEFAULT_PRICING } = require('../data/pricing');
+    res.json({ pricing: PRICING, default: DEFAULT_PRICING });
+  } catch (err) { next(err); }
+};
+
+// ── PATCH /api/admin/pricing/:country — update pricing for a country ────────
+const updatePricing = async (req, res, next) => {
+  try {
+    const { country } = req.params;
+    const { premium, gold, jobBoard, jobAutoApply, agentPlacement, matching } = req.body;
+
+    // Store custom pricing in database (overrides file-based defaults)
+    await query(`
+      INSERT INTO platform_config (key, value)
+      VALUES ($1, $2)
+      ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()
+    `, [`pricing_${country}`, JSON.stringify({ premium, gold, jobBoard, jobAutoApply, agentPlacement, matching })]);
+
+    res.json({ message: `Pricing updated for ${country}`, country, pricing: { premium, gold, jobBoard, jobAutoApply, agentPlacement, matching } });
+  } catch (err) { next(err); }
+};
+
+// ── GET /api/admin/stripe/stats — Stripe account overview ───────────────────
+const getStripeStats = async (req, res, next) => {
+  try {
+    let stripeData = { enabled: false };
+
+    if (process.env.STRIPE_SECRET_KEY) {
+      const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+      const [balance, charges, customers] = await Promise.all([
+        stripe.balance.retrieve().catch(() => ({ available: [], pending: [] })),
+        stripe.charges.list({ limit: 10 }).catch(() => ({ data: [] })),
+        stripe.customers.list({ limit: 5 }).catch(() => ({ data: [] })),
+      ]);
+
+      stripeData = {
+        enabled: true,
+        balance: {
+          available: balance.available?.map(b => ({ amount: b.amount / 100, currency: b.currency.toUpperCase() })) || [],
+          pending: balance.pending?.map(b => ({ amount: b.amount / 100, currency: b.currency.toUpperCase() })) || [],
+        },
+        recentCharges: charges.data?.map(c => ({
+          id: c.id,
+          amount: c.amount / 100,
+          currency: c.currency.toUpperCase(),
+          status: c.status,
+          email: c.billing_details?.email,
+          created: new Date(c.created * 1000),
+        })) || [],
+        totalCustomers: customers.data?.length || 0,
+      };
+    }
+
+    res.json(stripeData);
+  } catch (err) { next(err); }
+};
+
+// ── POST /api/admin/refund/:chargeId — issue refund ─────────────────────────
+const issueRefund = async (req, res, next) => {
+  try {
+    if (!process.env.STRIPE_SECRET_KEY) return res.status(500).json({ error: 'Stripe not configured' });
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    const { amount } = req.body; // optional partial refund amount
+
+    const refundParams = { charge: req.params.chargeId };
+    if (amount) refundParams.amount = Math.round(amount * 100);
+
+    const refund = await stripe.refunds.create(refundParams);
+    res.json({ refund: { id: refund.id, amount: refund.amount / 100, currency: refund.currency, status: refund.status } });
+  } catch (err) {
+    console.error('[Stripe Refund] Error:', err.message);
+    next(err);
+  }
+};
+
 module.exports = {
   getDashboard, getUsers, updateUser, getNotifications,
   getAgents, approveAgent, rejectAgent, suspendAgent, getAgentKYC,
   getSubscriptions, grantSubscription, adminCancelSubscription,
+  getRevenue, getPricingConfig, updatePricing, getStripeStats, issueRefund,
 };

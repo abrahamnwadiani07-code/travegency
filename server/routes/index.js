@@ -241,6 +241,16 @@ router.get('/sessions/video/active',     authenticate, sessionsCtrl.getActiveCal
 // VISA REQUIREMENTS
 // ══════════════════════════════════════════════════════════════════════════════
 router.get('/visa/search',              sessionsCtrl.searchVisa);
+router.get('/visa/countries',           (req, res) => {
+  const { getAllCountries } = require('./services/../services/ai-agent');
+  res.json({ countries: getAllCountries() });
+});
+router.get('/visa/popular',            async (req, res) => {
+  try {
+    const { rows } = await require('../db').query(`SELECT * FROM popular_routes ORDER BY search_count DESC LIMIT 20`);
+    res.json({ routes: rows });
+  } catch (e) { res.json({ routes: [] }); }
+});
 router.get('/visa/:from/:to/:category', sessionsCtrl.getVisaRequirements);
 
 // ══════════════════════════════════════════════════════════════════════════════

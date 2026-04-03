@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "migrate": "node migrate.js && node migrate-v2.js && node migrate-v3.js && node migrate-v4.js && node migrate-v5.js && node migrate-v6.js && node migrate-v7.js && node migrate-v8.js",
+    "migrate": "node migrate.js && node migrate-v2.js && node migrate-v3.js && node migrate-v4.js && node migrate-v5.js && node migrate-v6.js && node migrate-v7.js && node migrate-v8.js && node migrate-v9.js",
     "seed": "node seed.js && node seed-v3.js && node seed-visa.js",
     "fetch-jobs": "node fetch-jobs.js"
   },

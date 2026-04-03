@@ -98,6 +98,19 @@ const chat = async (req, res, next) => {
       } catch (e) { /* ignore parse errors */ }
     }
 
+    // ── AI Learning: track popular routes ──
+    const finalFrom = updates.from_country || context.from_country;
+    const finalTo = updates.to_country || context.to_country;
+    const finalPath = updates.travel_path || context.travel_path || req.body.travelPath;
+    if (finalFrom && finalTo && finalPath) {
+      query(`
+        INSERT INTO popular_routes (from_country, to_country, category, search_count, last_searched)
+        VALUES ($1, $2, $3, 1, NOW())
+        ON CONFLICT (from_country, to_country, category)
+        DO UPDATE SET search_count = popular_routes.search_count + 1, last_searched = NOW()
+      `, [finalFrom, finalTo, finalPath]).catch(() => {});
+    }
+
     // Clean response (remove JSON block for display)
     const cleanResponse = aiResponse.replace(/```json\n[\s\S]*?\n```/, '').trim();
 

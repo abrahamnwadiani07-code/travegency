@@ -448,6 +448,11 @@ async function generateResponse(messages, context) {
       if (visa) {
         return buildVisaResponse(from, destCountry.name, path, pathLabel, visa, updates);
       }
+      // Fallback to global knowledge base
+      const globalVisa = getVisaInfo(destCountry.name, path);
+      if (globalVisa) {
+        return buildVisaResponseFromKnowledge(from, destCountry.name, path, pathLabel, globalVisa, updates);
+      }
       return buildFollowUp(from, destCountry.name, path, pathLabel, updates, msgCount);
     }
     return { content: `Thank you! I have your origin as **${from}**.\n\n**Now, which country are you looking to ${path === 'education' ? 'study in' : path === 'relocation' ? 'move to' : 'visit'}?** For example: United Kingdom, United States, Canada, Germany, Australia, or UAE.`, updates };
@@ -460,6 +465,11 @@ async function generateResponse(messages, context) {
     const visa = VISA_DB[getVisaKey(from, to, path)];
     if (visa) {
       return buildVisaResponse(from, to, path, pathLabel, visa, updates);
+    }
+    // Fallback to global knowledge base
+    const globalVisa = getVisaInfo(to, path);
+    if (globalVisa) {
+      return buildVisaResponseFromKnowledge(from, to, path, pathLabel, globalVisa, updates);
     }
     return buildFollowUp(from, to, path, pathLabel, updates, msgCount);
   }
@@ -548,35 +558,131 @@ function buildFollowUp(from, to, path, pathLabel, updates, msgCount) {
 // CLAUDE API INTEGRATION
 // ══════════════════════════════════════════════════════════════════════════════
 
-const SYSTEM_PROMPT = `You are Tragency AI, an expert travel consultant for African travellers. You work for Tragency, a secure travel marketplace.
+// ── Build visa response from global knowledge base ──────────────────────────
+function buildVisaResponseFromKnowledge(from, to, path, pathLabel, info, updates) {
+  let content = `Excellent! Here's what I know about **${pathLabel}** travel from **${from}** to **${to}**:\n\n`;
+  content += `**Visa Type:** ${info.visa}\n`;
+  content += `**Application Fee:** ${info.fee}\n`;
+  content += `**Processing Time:** ${info.processing}\n`;
+  if (info.minSalary) content += `**Minimum Salary:** ${info.minSalary}\n`;
+  if (info.minFunds) content += `**Minimum Funds:** ${info.minFunds}\n`;
+  if (info.workRights) content += `**Work Rights:** ${info.workRights}\n`;
+  if (info.postStudy) content += `**Post-Study Options:** ${info.postStudy}\n`;
+  if (info.maxStay) content += `**Maximum Stay:** ${info.maxStay}\n`;
+  if (info.minIncome) content += `**Minimum Income:** ${info.minIncome}\n`;
+
+  if (info.requirements && info.requirements.length) {
+    content += `\n**Key Requirements:**\n`;
+    info.requirements.forEach(r => { content += `- ${r}\n`; });
+  }
+
+  if (info.documents && info.documents.length) {
+    content += `\n**Document Checklist:**\n`;
+    info.documents.forEach(d => { content += `- ${d}\n`; });
+  }
+
+  if (info.tips && info.tips.length) {
+    content += `\n**Pro Tips:**\n`;
+    info.tips.forEach(t => { content += `- ${t}\n`; });
+  }
+
+  if (info.applyUrl) content += `\n**Apply Here:** ${info.applyUrl}\n`;
+  if (info.sponsorList) content += `**Sponsor List:** ${info.sponsorList}\n`;
+
+  content += `\nThis is comprehensive guidance based on our knowledge base. **Would you like to connect with a verified Tragency agent** who specializes in ${from} → ${to} ${pathLabel.toLowerCase()} travel? They can handle the entire process for you.\n\n`;
+  content += `Just say **"yes"** or **"connect me"** when you're ready!\n\n`;
+  content += `\`\`\`json\n${JSON.stringify({
+    ready: true,
+    travelPath: path,
+    fromCountry: from,
+    toCountry: to,
+    purpose: pathLabel,
+    checklist: info.documents || info.requirements || [],
+  })}\n\`\`\``;
+
+  return { content, updates };
+}
+
+// Import global visa knowledge base
+const { VISA_KNOWLEDGE, getVisaInfo, getAllCountries, searchKnowledge } = require('../data/visa-knowledge');
+
+// Build dynamic system prompt with injected visa data for the specific route
+function buildSystemPrompt(context) {
+  const fromCountry = context.from_country || '';
+  const toCountry = context.to_country || '';
+  const path = context.travel_path || '';
+
+  let visaContext = '';
+  if (toCountry && path) {
+    const info = getVisaInfo(toCountry, path);
+    if (info) {
+      visaContext = `\n\nVISA INFORMATION FOR ${fromCountry || 'traveller'} → ${toCountry} (${path}):\n`;
+      visaContext += `- Visa Type: ${info.visa}\n`;
+      visaContext += `- Fee: ${info.fee}\n`;
+      visaContext += `- Processing Time: ${info.processing}\n`;
+      if (info.minSalary) visaContext += `- Minimum Salary: ${info.minSalary}\n`;
+      if (info.minFunds) visaContext += `- Minimum Funds: ${info.minFunds}\n`;
+      if (info.workRights) visaContext += `- Work Rights: ${info.workRights}\n`;
+      if (info.postStudy) visaContext += `- Post-Study: ${info.postStudy}\n`;
+      if (info.requirements) visaContext += `- Requirements: ${info.requirements.join(', ')}\n`;
+      if (info.documents) visaContext += `- Documents: ${info.documents.join(', ')}\n`;
+      if (info.tips) visaContext += `- Pro Tips: ${info.tips.join(' | ')}\n`;
+      if (info.applyUrl) visaContext += `- Apply: ${info.applyUrl}\n`;
+      if (info.sponsorList) visaContext += `- Sponsor List: ${info.sponsorList}\n`;
+    }
+  }
+
+  // List all countries we have data for
+  const countries = getAllCountries();
+  const countryList = countries.map(c => `${c.flag} ${c.name} (${c.categories.join(', ')})`).join('\n');
+
+  return `You are Tragency AI, the world's most knowledgeable travel and immigration consultant. You work for Tragency, a global travel marketplace connecting travellers with verified agents.
+
+YOUR EXPERTISE:
+- You have deep knowledge of visa requirements for 25+ countries across all categories
+- You know sponsorship rules, salary thresholds, processing times, document requirements
+- You understand the nuances of each country's immigration system
+- You give SPECIFIC, ACTIONABLE advice — not generic responses
+- You learn from each user message and build on previous context
 
 YOUR PERSONALITY:
-- Professional, warm, knowledgeable, patient
-- You speak like a real travel consultant who genuinely cares
+- Professional yet warm — like a trusted friend who happens to be an immigration expert
+- Confident and specific — never vague or wishy-washy
+- Encouraging but honest about challenges
 - You ask ONE question at a time, never overwhelm
-- You reference what the user previously told you
-- You explain things clearly without jargon
+- You ALWAYS reference what the user previously told you ("You mentioned you're a nurse from Nigeria...")
+- You proactively share relevant tips the user didn't ask about
 
-YOUR JOB:
-1. Understand the traveller's specific needs for their selected path
-2. Identify origin and destination countries
-3. Provide ACCURATE visa requirements and document checklists
-4. Give practical tips based on real experience
-5. When ready, recommend connecting with a human Tragency agent
+YOUR KNOWLEDGE (use this to give accurate responses):
+${visaContext}
 
-RULES:
-- Ask one question at a time
-- Always confirm what you understood before moving on
-- Reference previous answers ("You mentioned you're a nurse...")
-- Be encouraging but honest about challenges
-- Never make up visa requirements — if unsure, say so and recommend an agent
-- When you have enough info, include a JSON block at the END:
+COUNTRIES YOU HAVE DETAILED DATA FOR:
+${countryList}
+
+CONVERSATION RULES:
+1. Ask one focused question at a time
+2. Confirm understanding before moving to next topic ("So you're a software engineer with 5 years experience looking to work in Canada — is that right?")
+3. When you have FROM country, TO country, and PURPOSE → provide SPECIFIC visa info
+4. Include exact fees, processing times, salary thresholds, and document lists
+5. Share application URLs when available
+6. Offer 2-3 pro tips that most people don't know
+7. When ready to connect with an agent, include this JSON at the END:
 \`\`\`json
 {"ready":true,"travelPath":"...","fromCountry":"...","toCountry":"...","purpose":"...","checklist":["doc1","doc2",...]}
-\`\`\``;
+\`\`\`
+
+LEARNING BEHAVIOR:
+- Track all facts the user shares (profession, experience, budget, family status, timeline)
+- Reference these facts naturally in responses
+- If the user corrects you, acknowledge and update your understanding
+- Build progressively more personalized advice as the conversation continues
+- Remember the user's concerns and address them proactively`;
+}
 
 async function chat(messages, context) {
-  // Try Claude API first
+  const systemPrompt = buildSystemPrompt(context);
+
+  // Try Claude API first for maximum intelligence
   if (process.env.ANTHROPIC_API_KEY) {
     try {
       const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -588,8 +694,8 @@ async function chat(messages, context) {
         },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
-          max_tokens: 1024,
-          system: SYSTEM_PROMPT,
+          max_tokens: 1500,
+          system: systemPrompt,
           messages: messages.map(m => ({ role: m.role, content: m.content })),
         }),
       });
@@ -602,7 +708,8 @@ async function chat(messages, context) {
     }
   }
 
+  // Fallback to built-in engine (enhanced with visa knowledge)
   return generateResponse(messages, context);
 }
 
-module.exports = { chat, VISA_DB, findCountries, extractFromTo };
+module.exports = { chat, VISA_DB, VISA_KNOWLEDGE, findCountries, extractFromTo, getVisaInfo, getAllCountries, searchKnowledge };

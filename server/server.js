@@ -1,4 +1,10 @@
-require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
+// Load .env from parent dir (local dev) or from current dir / env vars (production)
+const path = require('path');
+const envPath = path.resolve(__dirname, '../.env');
+require('dotenv').config({ path: envPath });
+if (!process.env.DB_HOST && !process.env.DATABASE_URL) {
+  require('dotenv').config(); // fallback to server/.env or process env
+}
 
 const express  = require('express');
 const cors     = require('cors');

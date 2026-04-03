@@ -60,11 +60,27 @@ export default function TravellerDashboard() {
   // -- Notifications --
   const [notifications, setNotifications] = useState([]);
 
+  // -- Subscription / Tier --
+  const [userPlan, setUserPlan] = useState('free');
+  const [chatExpiry, setChatExpiry] = useState(null);
+  const [chatTimeLeft, setChatTimeLeft] = useState(null);
+
   // ───────── Load on mount ─────────
   useEffect(() => {
     loadAll();
     return () => clearInterval(pollRef.current);
-  }, []);
+  }, []); // eslint-disable-line
+
+  // ───────── Chat timer countdown ─────────
+  useEffect(() => {
+    if (!chatExpiry || userPlan === 'gold') return;
+    const timer = setInterval(() => {
+      const left = Math.max(0, new Date(chatExpiry) - Date.now());
+      setChatTimeLeft(left);
+      if (left <= 0) clearInterval(timer);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [chatExpiry, userPlan]);
 
   useEffect(() => {
     if (user) {
@@ -95,12 +111,20 @@ export default function TravellerDashboard() {
   async function loadAll() {
     setLoading(true);
     try {
+      const token = localStorage.getItem('tragency_token');
       const [bk, py] = await Promise.all([
         bookingsApi.list({ limit: 100 }),
         paymentsApi.list({ limit: 100 }),
       ]);
       setBookings(bk.bookings || []);
       setPayments(py.payments || []);
+      // Load subscription
+      try {
+        const subRes = await fetch('/api/subscriptions/me', { headers: { Authorization: `Bearer ${token}` } });
+        const subData = await subRes.json();
+        setUserPlan(subData.plan || 'free');
+        if (subData.activeChatExpiry) setChatExpiry(new Date(subData.activeChatExpiry));
+      } catch (e) { /* ignore */ }
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   }
@@ -241,6 +265,15 @@ export default function TravellerDashboard() {
           <div>
             <div className="dash-user-name">{user?.first_name} {user?.last_name}</div>
             <div className="dash-user-email">{user?.email}</div>
+            <div style={{
+              marginTop: 4, display: 'inline-block',
+              padding: '2px 10px', borderRadius: 12, fontSize: 10, fontWeight: 700, letterSpacing: '0.5px',
+              background: userPlan === 'gold' ? 'rgba(212,168,83,0.2)' : userPlan === 'premium' ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.05)',
+              color: userPlan === 'gold' ? 'var(--gold)' : userPlan === 'premium' ? '#a78bfa' : 'var(--muted)',
+              border: `1px solid ${userPlan === 'gold' ? 'rgba(212,168,83,0.3)' : userPlan === 'premium' ? 'rgba(99,102,241,0.3)' : 'var(--offwhite2)'}`,
+            }}>
+              {userPlan === 'gold' ? '👑 GOLD' : userPlan === 'premium' ? '⭐ PREMIUM' : 'FREE'}
+            </div>
           </div>
         </div>
 
@@ -427,6 +460,15 @@ export default function TravellerDashboard() {
                 <p>Select a booking to chat with your agent.</p>
                 <button className="btn-ghost" onClick={() => setTab('bookings')}>View Bookings</button>
               </div>
+            ) : userPlan === 'free' ? (
+              <div className="dash-empty">
+                <div className="dash-empty-icon">🔒</div>
+                <h3 className="serif" style={{ marginBottom: 8 }}>Upgrade to Chat</h3>
+                <p>Agent chat requires a Premium or Gold subscription.</p>
+                <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 16 }}>
+                  <Link to="/upgrade" className="btn-primary" style={{ textDecoration: 'none' }}>View Plans</Link>
+                </div>
+              </div>
             ) : (
               <div className="chat-wrap">
                 <div className="chat-booking-bar">
@@ -434,6 +476,19 @@ export default function TravellerDashboard() {
                   <span className={`pill ${STATUS_COLORS[selected.status]}`} style={{ fontSize: 10 }}>
                     {selected.status?.replace('_', ' ')}
                   </span>
+                  {userPlan === 'gold' && (
+                    <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--gold)', fontWeight: 600 }}>👑 Unlimited</span>
+                  )}
+                  {userPlan === 'premium' && chatTimeLeft !== null && (
+                    <span style={{ marginLeft: 8, fontSize: 11, color: chatTimeLeft < 300000 ? '#ef4444' : '#10b981', fontWeight: 600 }}>
+                      ⏱ {Math.floor(chatTimeLeft / 60000)}m {Math.floor((chatTimeLeft % 60000) / 1000)}s left
+                    </span>
+                  )}
+                  {userPlan === 'premium' && chatTimeLeft !== null && chatTimeLeft <= 0 && (
+                    <span style={{ marginLeft: 8, fontSize: 11, color: '#ef4444', fontWeight: 600 }}>
+                      Session expired — <Link to="/upgrade" style={{ color: 'var(--gold)' }}>Upgrade to Gold</Link>
+                    </span>
+                  )}
                   <span style={{ marginLeft: 'auto', fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
                     Agent: {selected.agent_name || 'Pending'}
                   </span>

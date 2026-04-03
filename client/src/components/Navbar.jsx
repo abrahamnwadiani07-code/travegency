@@ -37,6 +37,7 @@ export default function Navbar() {
         <Link to="/start" className={`nlink ${loc.pathname === '/start' ? 'active' : ''}`} onClick={() => setMenuOpen(false)}>Plan a Trip</Link>
         <Link to="/agents" className={`nlink ${loc.pathname === '/agents' ? 'active' : ''}`} onClick={() => setMenuOpen(false)}>Agents</Link>
         <Link to="/jobs" className={`nlink ${loc.pathname === '/jobs' ? 'active' : ''}`} onClick={() => setMenuOpen(false)}>Jobs</Link>
+        <Link to="/upgrade" className={`nlink nlink-upgrade ${loc.pathname === '/upgrade' ? 'active' : ''}`} onClick={() => setMenuOpen(false)}>Upgrade</Link>
         {user && (
           <Link to={dashLink} className={`nlink ${loc.pathname === dashLink ? 'active' : ''}`} onClick={() => setMenuOpen(false)}>
             {dashLabel}

@@ -70,8 +70,7 @@ export default function Home() {
                 <div className="pc-icon">{p.icon}</div>
                 <h3 className="serif pc-name">{p.label}</h3>
                 <p className="pc-desc">{p.description}</p>
-                <div className="pc-rate">From ₦{Number(p.rate).toLocaleString()}</div>
-                <span className="pc-arrow">→</span>
+                <span className="pc-arrow">Get Started →</span>
               </Link>
             ))}
           </div>
@@ -109,7 +108,7 @@ export default function Home() {
               { icon: '🔒', title: 'Escrow Protection', desc: 'Your money is held securely until you confirm service delivery. No more sending cash to strangers.' },
               { icon: '✓', title: 'Verified Agents', desc: 'Every agent is background-checked, licensed, and reviewed by our team before going live.' },
               { icon: '💬', title: 'In-App Messaging', desc: 'Chat directly with your agent. Track progress, ask questions, and stay informed.' },
-              { icon: '📊', title: 'Transparent Pricing', desc: 'See exactly what you\'re paying for. No hidden fees. Platform fee is just 5%.' },
+              { icon: '📊', title: 'Transparent Process', desc: 'Clear steps from consultation to completion. No hidden fees. Pay only for what you need.' },
               { icon: '⭐', title: 'Ratings & Reviews', desc: 'Read real reviews from other travellers. Choose agents with proven track records.' },
               { icon: '🌍', title: '7 Travel Paths', desc: 'Education, tourism, medical, business, relocation, religious, and family — we cover it all.' },
             ].map((f, i) => (

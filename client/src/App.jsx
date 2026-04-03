@@ -11,6 +11,7 @@ import Portal             from './pages/Portal';
 import AgentsPage         from './pages/Agents';
 import SwipeMatch         from './pages/SwipeMatch';
 import Jobs               from './pages/Jobs';
+import Upgrade            from './pages/Upgrade';
 import JobsPortal         from './pages/JobsPortal';
 import News               from './pages/News';
 
@@ -47,6 +48,7 @@ export default function App() {
           <Route path="/jobs"               element={<JobsPortal />} />
           <Route path="/jobs/board"         element={<Jobs />} />
           <Route path="/news"               element={<News />} />
+          <Route path="/upgrade"            element={<Upgrade />} />
 
           {/* Auth */}
           <Route path="/login"              element={<Login />} />

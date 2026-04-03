@@ -173,10 +173,13 @@ router.post('/news',                   authenticate, requireAdmin, newsCtrl.crea
 // ══════════════════════════════════════════════════════════════════════════════
 // SUBSCRIPTIONS
 // ══════════════════════════════════════════════════════════════════════════════
-router.get('/subscriptions/plans',     subsCtrl.getPlans);
-router.get('/subscriptions/me',        authenticate, subsCtrl.getMySubscription);
-router.post('/subscriptions',          authenticate, subsCtrl.subscribe);
-router.post('/subscriptions/cancel',   authenticate, subsCtrl.cancel);
+router.get('/subscriptions/tiers',          subsCtrl.getTiers);
+router.get('/subscriptions/plans',          subsCtrl.getPlans);
+router.get('/subscriptions/me',             authenticate, subsCtrl.getMySubscription);
+router.post('/subscriptions',               authenticate, subsCtrl.subscribe);
+router.post('/subscriptions/cancel',        authenticate, subsCtrl.cancel);
+router.post('/subscriptions/chat-session',  authenticate, subsCtrl.startChatSession);
+router.get('/subscriptions/chat-session/:agentId', authenticate, subsCtrl.checkChatSession);
 
 // ══════════════════════════════════════════════════════════════════════════════
 // ADMIN: FETCH JOBS (trigger manually or via cron)

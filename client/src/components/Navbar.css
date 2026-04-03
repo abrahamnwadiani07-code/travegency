@@ -33,6 +33,9 @@
 .nlink-ai { color: var(--accent); }
 .nlink-ai:hover { color: var(--accent); background: rgba(99,102,241,0.1); }
 .nlink-ai.active { color: var(--accent); background: rgba(99,102,241,0.15); }
+.nlink-upgrade { color: var(--gold); font-weight: 600; }
+.nlink-upgrade:hover { background: rgba(212,168,83,0.15); color: var(--gold); }
+.nlink-upgrade.active { background: rgba(212,168,83,0.2); }
 
 /* User area */
 .navbar-user-area { display: flex; align-items: center; gap: 8px; }

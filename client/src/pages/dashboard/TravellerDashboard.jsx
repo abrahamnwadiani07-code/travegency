@@ -493,6 +493,25 @@ export default function TravellerDashboard() {
                   <span style={{ marginLeft: 'auto', fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
                     Agent: {selected.agent_name || 'Pending'}
                   </span>
+                  {selected.agent_id && userPlan !== 'free' && (
+                    <button onClick={async () => {
+                      try {
+                        const apiBase = process.env.REACT_APP_API_URL || '/api';
+                        const tk = localStorage.getItem('tragency_token');
+                        const res = await fetch(`${apiBase}/sessions/video/start`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tk}` },
+                          body: JSON.stringify({ receiverId: selected.agent_id, bookingId: selected.id }),
+                        });
+                        const data = await res.json();
+                        if (data.joinUrl) window.open(data.joinUrl, '_blank', 'width=800,height=600');
+                        else alert(data.error || 'Failed to start call');
+                      } catch (e) { alert('Failed to start video call'); }
+                    }}
+                    style={{ marginLeft: 8, padding: '4px 12px', background: 'rgba(16,185,129,0.15)', color: '#10b981', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                      {'\uD83D\uDCF9'} Video Call
+                    </button>
+                  )}
                 </div>
                 <div className="chat-messages">
                   {messages.length === 0 && (

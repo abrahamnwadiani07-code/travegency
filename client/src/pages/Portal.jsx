@@ -124,6 +124,7 @@ export default function Portal() {
   const [conversationId, setConversationId] = useState(null);
   const [travelData, setTravelData] = useState(null);
   const [ready, setReady] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
 
   // Country selectors shown inline
   const [showFromCountry, setShowFromCountry] = useState(false);
@@ -214,6 +215,7 @@ export default function Portal() {
         if (data.context.askToCountry && !toCountry) setShowToCountry(true);
       }
 
+      if (data.suggestions) setSuggestions(data.suggestions);
       if (data.ready) {
         setReady(true);
         if (data.travelData) setTravelData(data.travelData);
@@ -270,6 +272,7 @@ export default function Portal() {
         if (data.context.askFromCountry && !from) setShowFromCountry(true);
         if (data.context.askToCountry && !to) setShowToCountry(true);
       }
+      if (data.suggestions) setSuggestions(data.suggestions);
       if (data.ready) {
         setReady(true);
         if (data.travelData) setTravelData(data.travelData);
@@ -487,6 +490,19 @@ export default function Portal() {
             )}
 
             {/* Input bar */}
+            {/* Quick reply suggestions */}
+            {suggestions.length > 0 && (
+              <div style={{ display: 'flex', gap: 8, padding: '8px 20px', flexWrap: 'wrap', borderTop: '1px solid var(--offwhite2)' }}>
+                {suggestions.map((s, i) => (
+                  <button key={i} onClick={() => { setInput(s); setSuggestions([]); }}
+                    style={{ padding: '6px 14px', background: 'rgba(212,168,83,0.1)', border: '1px solid rgba(212,168,83,0.25)', borderRadius: 20, color: 'var(--gold)', fontSize: 12, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s' }}
+                    onMouseOver={e => e.target.style.background = 'rgba(212,168,83,0.2)'}
+                    onMouseOut={e => e.target.style.background = 'rgba(212,168,83,0.1)'}
+                  >{s}</button>
+                ))}
+              </div>
+            )}
+
             <form className="pc-input-bar" onSubmit={handleSend}>
               <textarea
                 ref={inputRef}

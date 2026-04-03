@@ -75,6 +75,11 @@ export default function AdminDashboard() {
   const [grantForm, setGrantForm] = useState({ userId: '', plan: 'premium', days: 30 });
   const [grantMsg, setGrantMsg] = useState('');
 
+  // Job posting
+  const [jobForm, setJobForm] = useState({ title: '', description: '', country: '', city: '', industry: 'Technology', visa_sponsored: true, visa_type: '', salary_min: '', salary_max: '', salary_currency: 'USD', experience_min: 0, apply_url: '', company_name: '', employment_type: 'full-time' });
+  const [jobPosting, setJobPosting] = useState(false);
+  const [jobMsg, setJobMsg] = useState('');
+
   // Revenue tab
   const [revenue, setRevenue] = useState(null);
   const [stripeStats, setStripeStats] = useState(null);
@@ -386,6 +391,7 @@ export default function AdminDashboard() {
     { id: 'revenue',       label: 'Revenue',         icon: '\u{1F4B5}' },
     { id: 'pricing',       label: 'Pricing',         icon: '\u{1F3F7}' },
     { id: 'users',         label: 'Users',          icon: '\u{1F465}' },
+    { id: 'postjob',       label: 'Post Job',       icon: '\u{1F4DD}' },
     { id: 'settings',      label: 'Settings',       icon: '\u2699\uFE0F' },
     { id: 'notifications', label: 'Notifications',  icon: '\u{1F514}', badge: unreadCount },
   ];
@@ -980,6 +986,110 @@ export default function AdminDashboard() {
                 </table>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ═══ POST JOB ═════════════════════════════════════════════ */}
+        {!loading && tab === 'postjob' && (
+          <div className="dash-section anim-fadeUp">
+            <div className="dash-section-head">
+              <div><h2 className="serif">Post a Job</h2><p className="dash-section-sub">Add job listings for any country</p></div>
+            </div>
+
+            {jobMsg && <div style={{ padding: 10, borderRadius: 8, marginBottom: 16, fontSize: 13, background: jobMsg.includes('posted') ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)', color: jobMsg.includes('posted') ? '#10b981' : '#ef4444' }}>{jobMsg}</div>}
+
+            <form onSubmit={async (e) => {
+              e.preventDefault(); setJobPosting(true); setJobMsg('');
+              try {
+                const token = localStorage.getItem('tragency_token');
+                const res = await fetch(`${API_BASE}/jobs`, {
+                  method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                  body: JSON.stringify(jobForm),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+                setJobMsg('Job posted successfully!');
+                setJobForm({ title: '', description: '', country: '', city: '', industry: 'Technology', visa_sponsored: true, visa_type: '', salary_min: '', salary_max: '', salary_currency: 'USD', experience_min: 0, apply_url: '', company_name: '', employment_type: 'full-time' });
+              } catch (err) { setJobMsg(err.message); }
+              finally { setJobPosting(false); }
+            }} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={{ display: 'block', fontSize: 13, color: 'var(--ink3)', marginBottom: 4 }}>Job Title *</label>
+                <input value={jobForm.title} onChange={e => setJobForm(p => ({ ...p, title: e.target.value }))} required
+                  style={{ width: '100%', padding: 10, background: 'var(--bg)', color: 'var(--ink)', border: '1px solid var(--offwhite3)', borderRadius: 8, fontSize: 14 }} />
+              </div>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={{ display: 'block', fontSize: 13, color: 'var(--ink3)', marginBottom: 4 }}>Description *</label>
+                <textarea value={jobForm.description} onChange={e => setJobForm(p => ({ ...p, description: e.target.value }))} required rows={4}
+                  style={{ width: '100%', padding: 10, background: 'var(--bg)', color: 'var(--ink)', border: '1px solid var(--offwhite3)', borderRadius: 8, fontSize: 14, resize: 'vertical', fontFamily: 'inherit' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 13, color: 'var(--ink3)', marginBottom: 4 }}>Company Name</label>
+                <input value={jobForm.company_name} onChange={e => setJobForm(p => ({ ...p, company_name: e.target.value }))}
+                  style={{ width: '100%', padding: 10, background: 'var(--bg)', color: 'var(--ink)', border: '1px solid var(--offwhite3)', borderRadius: 8, fontSize: 14 }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 13, color: 'var(--ink3)', marginBottom: 4 }}>Country *</label>
+                <input value={jobForm.country} onChange={e => setJobForm(p => ({ ...p, country: e.target.value }))} required placeholder="e.g. United Kingdom"
+                  style={{ width: '100%', padding: 10, background: 'var(--bg)', color: 'var(--ink)', border: '1px solid var(--offwhite3)', borderRadius: 8, fontSize: 14 }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 13, color: 'var(--ink3)', marginBottom: 4 }}>City</label>
+                <input value={jobForm.city} onChange={e => setJobForm(p => ({ ...p, city: e.target.value }))} placeholder="e.g. London"
+                  style={{ width: '100%', padding: 10, background: 'var(--bg)', color: 'var(--ink)', border: '1px solid var(--offwhite3)', borderRadius: 8, fontSize: 14 }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 13, color: 'var(--ink3)', marginBottom: 4 }}>Industry</label>
+                <select value={jobForm.industry} onChange={e => setJobForm(p => ({ ...p, industry: e.target.value }))}
+                  style={{ width: '100%', padding: 10, background: 'var(--bg)', color: 'var(--ink)', border: '1px solid var(--offwhite3)', borderRadius: 8, fontSize: 14 }}>
+                  {['Technology','Finance','Healthcare','Engineering','Education','Consulting','Energy','Marketing','Legal','Hospitality','Retail','General'].map(i => <option key={i}>{i}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 13, color: 'var(--ink3)', marginBottom: 4 }}>Visa Sponsored?</label>
+                <select value={jobForm.visa_sponsored ? 'yes' : 'no'} onChange={e => setJobForm(p => ({ ...p, visa_sponsored: e.target.value === 'yes' }))}
+                  style={{ width: '100%', padding: 10, background: 'var(--bg)', color: 'var(--ink)', border: '1px solid var(--offwhite3)', borderRadius: 8, fontSize: 14 }}>
+                  <option value="yes">Yes</option><option value="no">No</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 13, color: 'var(--ink3)', marginBottom: 4 }}>Visa Type</label>
+                <input value={jobForm.visa_type} onChange={e => setJobForm(p => ({ ...p, visa_type: e.target.value }))} placeholder="e.g. Skilled Worker"
+                  style={{ width: '100%', padding: 10, background: 'var(--bg)', color: 'var(--ink)', border: '1px solid var(--offwhite3)', borderRadius: 8, fontSize: 14 }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 13, color: 'var(--ink3)', marginBottom: 4 }}>Min Salary</label>
+                <input type="number" value={jobForm.salary_min} onChange={e => setJobForm(p => ({ ...p, salary_min: e.target.value }))}
+                  style={{ width: '100%', padding: 10, background: 'var(--bg)', color: 'var(--ink)', border: '1px solid var(--offwhite3)', borderRadius: 8, fontSize: 14 }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 13, color: 'var(--ink3)', marginBottom: 4 }}>Max Salary</label>
+                <input type="number" value={jobForm.salary_max} onChange={e => setJobForm(p => ({ ...p, salary_max: e.target.value }))}
+                  style={{ width: '100%', padding: 10, background: 'var(--bg)', color: 'var(--ink)', border: '1px solid var(--offwhite3)', borderRadius: 8, fontSize: 14 }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 13, color: 'var(--ink3)', marginBottom: 4 }}>Currency</label>
+                <select value={jobForm.salary_currency} onChange={e => setJobForm(p => ({ ...p, salary_currency: e.target.value }))}
+                  style={{ width: '100%', padding: 10, background: 'var(--bg)', color: 'var(--ink)', border: '1px solid var(--offwhite3)', borderRadius: 8, fontSize: 14 }}>
+                  {['USD','GBP','EUR','CAD','AUD','NGN','INR','AED','SGD','JPY'].map(c => <option key={c}>{c}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 13, color: 'var(--ink3)', marginBottom: 4 }}>Min Experience (years)</label>
+                <input type="number" value={jobForm.experience_min} onChange={e => setJobForm(p => ({ ...p, experience_min: parseInt(e.target.value) || 0 }))}
+                  style={{ width: '100%', padding: 10, background: 'var(--bg)', color: 'var(--ink)', border: '1px solid var(--offwhite3)', borderRadius: 8, fontSize: 14 }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 13, color: 'var(--ink3)', marginBottom: 4 }}>Apply URL</label>
+                <input value={jobForm.apply_url} onChange={e => setJobForm(p => ({ ...p, apply_url: e.target.value }))} placeholder="https://..."
+                  style={{ width: '100%', padding: 10, background: 'var(--bg)', color: 'var(--ink)', border: '1px solid var(--offwhite3)', borderRadius: 8, fontSize: 14 }} />
+              </div>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <button type="submit" disabled={jobPosting} style={{ padding: '12px 32px', background: 'var(--gold)', color: 'var(--bg)', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  {jobPosting ? 'Posting...' : 'Post Job'}
+                </button>
+              </div>
+            </form>
           </div>
         )}
 

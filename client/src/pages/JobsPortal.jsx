@@ -168,6 +168,7 @@ export default function JobsPortal() {
   const [conversationId, setConversationId] = useState(null);
   const [jobContext, setJobContext] = useState(null); // AI-extracted profile data
   const [ready, setReady] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
 
   // Plan selection
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -254,6 +255,7 @@ export default function JobsPortal() {
         setJobContext(prev => ({ ...prev, ...data.travelData }));
       }
 
+      if (data.suggestions) setSuggestions(data.suggestions);
       if (data.ready) {
         setReady(true);
       }
@@ -474,6 +476,15 @@ export default function JobsPortal() {
             )}
 
             {/* Input bar */}
+            {suggestions.length > 0 && (
+              <div style={{ display: 'flex', gap: 8, padding: '8px 20px', flexWrap: 'wrap', borderTop: '1px solid var(--offwhite2)' }}>
+                {suggestions.map((s, i) => (
+                  <button key={i} onClick={() => { setInput(s); setSuggestions([]); }}
+                    style={{ padding: '6px 14px', background: 'rgba(212,168,83,0.1)', border: '1px solid rgba(212,168,83,0.25)', borderRadius: 20, color: 'var(--gold)', fontSize: 12, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+                  >{s}</button>
+                ))}
+              </div>
+            )}
             <form className="jp-input-bar" onSubmit={handleSend}>
               <textarea
                 ref={inputRef}

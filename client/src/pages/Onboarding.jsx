@@ -31,7 +31,7 @@ export default function Onboarding() {
               <div className="obc-icon">{p.icon}</div>
               <div className="obc-label serif">{p.label}</div>
               <p className="obc-desc">{p.description}</p>
-              <div className="obc-rate">From ₦{Number(p.rate).toLocaleString()}</div>
+              <div className="obc-rate">Get Started →</div>
               {selected === p.id && <div className="obc-check">✓</div>}
             </button>
           ))}

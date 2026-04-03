@@ -74,14 +74,23 @@ const createCheckout = async (req, res, next) => {
     const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
 
     // Create Stripe Checkout Session
+    // Payment methods: card, PayPal, Google Pay, Apple Pay, bank transfers, Revolut Pay
+    // Stripe auto-shows relevant methods based on customer's country
     const sessionConfig = {
-      payment_method_types: ['card'],
+      payment_method_types: isRecurring
+        ? ['card']  // subscriptions: card only (PayPal doesn't support recurring via Stripe)
+        : undefined, // one-time: let Stripe auto-select best methods for the country
       mode: isRecurring ? 'subscription' : 'payment',
       customer_email: req.user.email,
       metadata: { userId, plan, country: country || 'unknown' },
       success_url: `${clientUrl}/dashboard?payment=success&plan=${plan}`,
       cancel_url: `${clientUrl}/upgrade?payment=cancelled`,
     };
+
+    // For one-time payments, enable all available payment methods
+    if (!isRecurring) {
+      sessionConfig.payment_method_configuration = undefined; // use Stripe Dashboard settings
+    }
 
     if (isRecurring) {
       // Create a price on the fly for subscription

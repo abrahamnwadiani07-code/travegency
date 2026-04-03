@@ -4,3 +4,4 @@ node_modules/
 client/build/
 .DS_Store
 .claude/settings.local.json
+server/uploads/

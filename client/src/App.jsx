@@ -22,6 +22,7 @@ import ResetPassword      from './pages/auth/ResetPassword';
 import VerifyEmail        from './pages/auth/VerifyEmail';
 
 import AgentApply         from './pages/agent/AgentApply';
+import KYCForm            from './pages/agent/KYCForm';
 
 import TravellerDashboard from './pages/dashboard/TravellerDashboard';
 import AgentDashboard     from './pages/dashboard/AgentDashboard';
@@ -59,6 +60,7 @@ export default function App() {
 
           {/* Agent Application */}
           <Route path="/agent/apply"        element={<AgentApply />} />
+          <Route path="/agent/kyc"          element={<KYCForm />} />
 
           {/* Traveller Dashboard */}
           <Route path="/dashboard" element={

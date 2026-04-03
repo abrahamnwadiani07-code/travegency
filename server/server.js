@@ -33,6 +33,9 @@ app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// ── Serve uploaded files ────────────────────────────────────────────────────
+app.use('/uploads', express.static(require('path').join(__dirname, 'uploads')));
+
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => {
   res.json({

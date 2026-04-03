@@ -19,6 +19,7 @@ const newsCtrl       = require('../controllers/news.controller');
 const subsCtrl       = require('../controllers/subscriptions.controller');
 const { fetchAllJobs } = require('../services/job-fetcher');
 const autoApplyCtrl  = require('../controllers/autoapply.controller');
+const kycCtrl        = require('../controllers/kyc.controller');
 
 // ══════════════════════════════════════════════════════════════════════════════
 // AUTH
@@ -210,5 +211,12 @@ router.get('/autoapply/profile',    authenticate, autoApplyCtrl.getProfile);
 router.post('/autoapply/profile',   authenticate, autoApplyCtrl.saveProfile);
 router.post('/autoapply/run',       authenticate, autoApplyCtrl.runAutoApply);
 router.get('/autoapply/stats',      authenticate, autoApplyCtrl.getStats);
+
+// ══════════════════════════════════════════════════════════════════════════════
+// KYC — Identity Verification
+// ══════════════════════════════════════════════════════════════════════════════
+router.post('/kyc/submit',              authenticate, kycCtrl.kycUpload, kycCtrl.submitKYC);
+router.get('/kyc/status',               authenticate, kycCtrl.getKYCStatus);
+router.get('/kyc/documents/:userId',    authenticate, requireAdmin, kycCtrl.getDocuments);
 
 module.exports = router;

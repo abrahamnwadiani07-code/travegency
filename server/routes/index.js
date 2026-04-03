@@ -20,6 +20,7 @@ const subsCtrl       = require('../controllers/subscriptions.controller');
 const { fetchAllJobs } = require('../services/job-fetcher');
 const autoApplyCtrl  = require('../controllers/autoapply.controller');
 const kycCtrl        = require('../controllers/kyc.controller');
+const sessionsCtrl   = require('../controllers/sessions.controller');
 
 // ══════════════════════════════════════════════════════════════════════════════
 // AUTH
@@ -218,5 +219,27 @@ router.get('/autoapply/stats',      authenticate, autoApplyCtrl.getStats);
 router.post('/kyc/submit',              authenticate, kycCtrl.kycUpload, kycCtrl.submitKYC);
 router.get('/kyc/status',               authenticate, kycCtrl.getKYCStatus);
 router.get('/kyc/documents/:userId',    authenticate, requireAdmin, kycCtrl.getDocuments);
+
+// ══════════════════════════════════════════════════════════════════════════════
+// AGENT SESSIONS (1hr trial + 1 month paid)
+// ══════════════════════════════════════════════════════════════════════════════
+router.get('/sessions/active',           authenticate, sessionsCtrl.getActiveSessions);
+router.post('/sessions/start',           authenticate, sessionsCtrl.startSession);
+router.post('/sessions/:id/renew',       authenticate, sessionsCtrl.renewSession);
+router.post('/sessions/check-expiry',    authenticate, requireAdmin, sessionsCtrl.checkExpiry);
+router.post('/sessions/message',         authenticate, sessionsCtrl.sendSecureMessage);
+
+// ══════════════════════════════════════════════════════════════════════════════
+// VIDEO CALLS (Jitsi Meet)
+// ══════════════════════════════════════════════════════════════════════════════
+router.post('/sessions/video/start',     authenticate, sessionsCtrl.startVideoCall);
+router.post('/sessions/video/:id/end',   authenticate, sessionsCtrl.endVideoCall);
+router.get('/sessions/video/active',     authenticate, sessionsCtrl.getActiveCalls);
+
+// ══════════════════════════════════════════════════════════════════════════════
+// VISA REQUIREMENTS
+// ══════════════════════════════════════════════════════════════════════════════
+router.get('/visa/search',              sessionsCtrl.searchVisa);
+router.get('/visa/:from/:to/:category', sessionsCtrl.getVisaRequirements);
 
 module.exports = router;

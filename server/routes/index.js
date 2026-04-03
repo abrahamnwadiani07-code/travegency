@@ -112,6 +112,18 @@ router.get('/admin/users',           authenticate, requireAdmin, adminCtrl.getUs
 router.patch('/admin/users/:id',     authenticate, requireAdmin, adminCtrl.updateUser);
 router.get('/admin/notifications',   authenticate, adminCtrl.getNotifications);
 
+// Admin — Agent Management & KYC
+router.get('/admin/agents',                authenticate, requireAdmin, adminCtrl.getAgents);
+router.get('/admin/agents/:id/kyc',        authenticate, requireAdmin, adminCtrl.getAgentKYC);
+router.patch('/admin/agents/:id/approve',  authenticate, requireAdmin, adminCtrl.approveAgent);
+router.patch('/admin/agents/:id/reject',   authenticate, requireAdmin, adminCtrl.rejectAgent);
+router.patch('/admin/agents/:id/suspend',  authenticate, requireAdmin, adminCtrl.suspendAgent);
+
+// Admin — Subscription Management
+router.get('/admin/subscriptions',              authenticate, requireAdmin, adminCtrl.getSubscriptions);
+router.post('/admin/subscriptions/grant',       authenticate, requireAdmin, adminCtrl.grantSubscription);
+router.patch('/admin/subscriptions/:id/cancel', authenticate, requireAdmin, adminCtrl.adminCancelSubscription);
+
 // ══════════════════════════════════════════════════════════════════════════════
 // REVIEWS
 // ══════════════════════════════════════════════════════════════════════════════

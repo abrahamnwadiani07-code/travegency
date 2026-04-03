@@ -1,2 +1,64 @@
 /* ══ Admin Dashboard extras ═══════════════════════════════════════════════ */
-/* Most styles are shared via Dashboard.css — only admin-specific overrides here */
+
+/* Small action buttons */
+.btn-sm { padding: 4px 12px; font-size: 11px; font-weight: 600; border: none; border-radius: 6px; cursor: pointer; font-family: 'Outfit', sans-serif; transition: all 0.2s; }
+.btn-sm-success { background: rgba(16,185,129,0.15); color: #10b981; }
+.btn-sm-success:hover { background: rgba(16,185,129,0.3); }
+.btn-sm-danger { background: rgba(239,68,68,0.15); color: #ef4444; }
+.btn-sm-danger:hover { background: rgba(239,68,68,0.3); }
+.btn-sm-warn { background: rgba(245,158,11,0.15); color: #f59e0b; }
+.btn-sm-warn:hover { background: rgba(245,158,11,0.3); }
+
+.btn-primary { padding: 10px 20px; background: var(--gold); color: var(--bg); border: none; border-radius: var(--radius-sm); font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.btn-primary:hover { filter: brightness(1.1); }
+
+.btn-danger { padding: 10px 20px; background: #ef4444; color: #fff; border: none; border-radius: var(--radius-sm); font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.btn-danger:hover { filter: brightness(1.1); }
+
+/* KYC Details */
+.kyc-details { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+.kyc-row { display: flex; align-items: center; gap: 12px; font-size: 14px; }
+.kyc-row span:first-child { color: var(--muted); min-width: 120px; font-size: 13px; }
+.kyc-row strong { color: var(--ink); }
+.kyc-bio { margin-top: 8px; }
+.kyc-bio span { color: var(--muted); font-size: 13px; display: block; margin-bottom: 4px; }
+.kyc-bio p { color: var(--ink2); font-size: 14px; line-height: 1.6; margin: 0; }
+
+/* Modal overlay */
+.admin-modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center; z-index: 500; padding: 2rem;
+}
+
+.admin-modal {
+  width: 100%; max-width: 560px; background: var(--bg2); border: 1px solid var(--offwhite3);
+  border-radius: 16px; padding: 2rem; position: relative; max-height: 80vh; overflow-y: auto;
+}
+
+.admin-modal h3 { font-size: 1.2rem; color: var(--ink); margin-bottom: 0.5rem; }
+
+.admin-modal-close {
+  position: absolute; top: 16px; right: 16px; width: 32px; height: 32px;
+  background: var(--bg3); color: var(--ink3); border: 1px solid var(--offwhite2);
+  border-radius: 50%; font-size: 18px; cursor: pointer; display: flex;
+  align-items: center; justify-content: center; transition: all 0.2s;
+}
+.admin-modal-close:hover { color: var(--ink); border-color: var(--offwhite3); }
+
+/* Admin table */
+.table-wrap { overflow-x: auto; }
+.admin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.admin-table th { text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--offwhite2); }
+.admin-table td { padding: 12px 14px; border-bottom: 1px solid var(--offwhite2); color: var(--ink2); vertical-align: middle; }
+.admin-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+/* Loading */
+.dash-loading { text-align: center; padding: 3rem; color: var(--muted); }
+.dl-spinner { width: 32px; height: 32px; border: 3px solid var(--offwhite3); border-top-color: var(--gold); border-radius: 50%; margin: 0 auto 1rem; animation: dlSpin 0.8s linear infinite; }
+@keyframes dlSpin { to { transform: rotate(360deg); } }
+
+@media (max-width: 768px) {
+  .admin-table { font-size: 12px; }
+  .admin-table th, .admin-table td { padding: 8px 10px; }
+  .admin-modal { padding: 1.5rem; max-width: 100%; }
+}

@@ -3,7 +3,7 @@ const { query } = require('../db');
 // ── GET /api/admin/dashboard — platform stats ──────────────────────────────────
 const getDashboard = async (req, res, next) => {
   try {
-    const [users, bookings, payments, agents] = await Promise.all([
+    const [users, bookings, payments, agents, subscriptions] = await Promise.all([
       query(`
         SELECT
           COUNT(*)                                                    AS total,
@@ -42,9 +42,17 @@ const getDashboard = async (req, res, next) => {
           COUNT(*) FILTER (WHERE status = 'suspended')        AS suspended
         FROM agents
       `),
+      query(`
+        SELECT
+          COUNT(*)                                                     AS total,
+          COUNT(*) FILTER (WHERE status = 'active')                    AS active,
+          COUNT(*) FILTER (WHERE plan = 'gold')                        AS gold,
+          COUNT(*) FILTER (WHERE plan = 'premium')                     AS premium,
+          COALESCE(SUM(amount) FILTER (WHERE status = 'active'), 0)    AS monthly_revenue
+        FROM subscriptions
+      `).catch(() => ({ rows: [{ total: 0, active: 0, gold: 0, premium: 0, monthly_revenue: 0 }] })),
     ]);
 
-    // Recent bookings
     const { rows: recentBookings } = await query(`
       SELECT b.id, b.reference, b.destination, b.travel_path, b.status, b.amount, b.created_at,
         u.first_name || ' ' || u.last_name AS traveller_name
@@ -55,10 +63,11 @@ const getDashboard = async (req, res, next) => {
 
     res.json({
       stats: {
-        users:    users.rows[0],
-        bookings: bookings.rows[0],
-        payments: payments.rows[0],
-        agents:   agents.rows[0],
+        users:         users.rows[0],
+        bookings:      bookings.rows[0],
+        payments:      payments.rows[0],
+        agents:        agents.rows[0],
+        subscriptions: subscriptions.rows[0],
       },
       recentBookings,
     });
@@ -75,20 +84,11 @@ const getUsers = async (req, res, next) => {
              travel_path, is_verified, last_login, created_at
       FROM users WHERE 1=1
     `;
-
-    if (role) {
-      params.push(role);
-      sql += ` AND role = $${params.length}::user_role`;
-    }
-    if (search) {
-      params.push(`%${search}%`);
-      sql += ` AND (first_name ILIKE $${params.length} OR last_name ILIKE $${params.length} OR email ILIKE $${params.length})`;
-    }
-
+    if (role) { params.push(role); sql += ` AND role = $${params.length}::user_role`; }
+    if (search) { params.push(`%${search}%`); sql += ` AND (first_name ILIKE $${params.length} OR last_name ILIKE $${params.length} OR email ILIKE $${params.length})`; }
     sql += ` ORDER BY created_at DESC`;
     params.push(parseInt(limit), parseInt(offset));
     sql += ` LIMIT $${params.length - 1} OFFSET $${params.length}`;
-
     const { rows } = await query(sql, params);
     res.json({ users: rows });
   } catch (err) { next(err); }
@@ -100,26 +100,185 @@ const updateUser = async (req, res, next) => {
     const { role, is_verified } = req.body;
     const sets = [];
     const params = [];
-
-    if (role !== undefined) {
-      params.push(role);
-      sets.push(`role = $${params.length}::user_role`);
-    }
-    if (is_verified !== undefined) {
-      params.push(is_verified);
-      sets.push(`is_verified = $${params.length}`);
-    }
-
+    if (role !== undefined) { params.push(role); sets.push(`role = $${params.length}::user_role`); }
+    if (is_verified !== undefined) { params.push(is_verified); sets.push(`is_verified = $${params.length}`); }
     if (!sets.length) return res.status(400).json({ error: 'Nothing to update' });
-
     params.push(req.params.id);
-    const { rows } = await query(
-      `UPDATE users SET ${sets.join(', ')} WHERE id = $${params.length} RETURNING id, role, first_name, last_name, email, is_verified`,
-      params
-    );
-
+    const { rows } = await query(`UPDATE users SET ${sets.join(', ')} WHERE id = $${params.length} RETURNING id, role, first_name, last_name, email, is_verified`, params);
     if (!rows.length) return res.status(404).json({ error: 'User not found' });
     res.json({ user: rows[0] });
+  } catch (err) { next(err); }
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// AGENT MANAGEMENT & KYC
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ── GET /api/admin/agents — list all agents with KYC status ─────────────────
+const getAgents = async (req, res, next) => {
+  try {
+    const { status, search } = req.query;
+    const params = [];
+    let sql = `
+      SELECT a.id, a.user_id, a.agency_name, a.license_number, a.bio, a.specializations,
+             a.rating, a.total_reviews, a.status, a.kyc_status, a.kyc_documents,
+             a.kyc_submitted_at, a.kyc_reviewed_at, a.kyc_reviewer_notes,
+             a.created_at, a.updated_at,
+             u.first_name, u.last_name, u.email, u.phone, u.country
+      FROM agents a
+      LEFT JOIN users u ON u.id = a.user_id
+      WHERE 1=1
+    `;
+    if (status) { params.push(status); sql += ` AND a.status = $${params.length}`; }
+    if (search) { params.push(`%${search}%`); sql += ` AND (a.agency_name ILIKE $${params.length} OR u.first_name ILIKE $${params.length} OR u.last_name ILIKE $${params.length} OR u.email ILIKE $${params.length})`; }
+    sql += ` ORDER BY a.created_at DESC`;
+    const { rows } = await query(sql, params);
+    res.json({ agents: rows });
+  } catch (err) { next(err); }
+};
+
+// ── PATCH /api/admin/agents/:id/approve — approve agent ─────────────────────
+const approveAgent = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { rows } = await query(`
+      UPDATE agents SET status = 'active', kyc_status = 'approved',
+        kyc_reviewed_at = NOW(), kyc_reviewer_notes = $2
+      WHERE id = $1 RETURNING *
+    `, [id, req.body.notes || 'Approved by admin']);
+    if (!rows.length) return res.status(404).json({ error: 'Agent not found' });
+
+    // Notify agent
+    await query(`
+      INSERT INTO notifications (user_id, title, body, type)
+      VALUES ($1, 'Application Approved!', 'Congratulations! Your agent application has been approved. You can now receive bookings.', 'agent_approved')
+    `, [rows[0].user_id]).catch(() => {});
+
+    res.json({ agent: rows[0], message: 'Agent approved successfully' });
+  } catch (err) { next(err); }
+};
+
+// ── PATCH /api/admin/agents/:id/reject — reject agent ───────────────────────
+const rejectAgent = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+    const { rows } = await query(`
+      UPDATE agents SET status = 'rejected', kyc_status = 'rejected',
+        kyc_reviewed_at = NOW(), kyc_reviewer_notes = $2
+      WHERE id = $1 RETURNING *
+    `, [id, reason || 'Application rejected']);
+    if (!rows.length) return res.status(404).json({ error: 'Agent not found' });
+
+    await query(`
+      INSERT INTO notifications (user_id, title, body, type)
+      VALUES ($1, 'Application Rejected', $2, 'agent_rejected')
+    `, [rows[0].user_id, `Your agent application was not approved. Reason: ${reason || 'Does not meet requirements'}. Please update your KYC documents and resubmit.`]).catch(() => {});
+
+    res.json({ agent: rows[0], message: 'Agent rejected' });
+  } catch (err) { next(err); }
+};
+
+// ── PATCH /api/admin/agents/:id/suspend — suspend agent ─────────────────────
+const suspendAgent = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { rows } = await query(`
+      UPDATE agents SET status = 'suspended', kyc_reviewer_notes = $2
+      WHERE id = $1 RETURNING *
+    `, [id, req.body.reason || 'Suspended by admin']);
+    if (!rows.length) return res.status(404).json({ error: 'Agent not found' });
+
+    await query(`
+      INSERT INTO notifications (user_id, title, body, type)
+      VALUES ($1, 'Account Suspended', $2, 'agent_suspended')
+    `, [rows[0].user_id, `Your agent account has been suspended. Reason: ${req.body.reason || 'Policy violation'}`]).catch(() => {});
+
+    res.json({ agent: rows[0], message: 'Agent suspended' });
+  } catch (err) { next(err); }
+};
+
+// ── GET /api/admin/agents/:id/kyc — view agent KYC documents ────────────────
+const getAgentKYC = async (req, res, next) => {
+  try {
+    const { rows } = await query(`
+      SELECT a.*, u.first_name, u.last_name, u.email, u.phone, u.country
+      FROM agents a LEFT JOIN users u ON u.id = a.user_id
+      WHERE a.id = $1
+    `, [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Agent not found' });
+
+    // Get agent's uploaded documents
+    let documents = [];
+    try {
+      const { rows: docs } = await query(`
+        SELECT * FROM documents WHERE user_id = $1 ORDER BY created_at DESC
+      `, [rows[0].user_id]);
+      documents = docs;
+    } catch (e) { /* table may not exist */ }
+
+    res.json({ agent: rows[0], documents });
+  } catch (err) { next(err); }
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SUBSCRIPTION MANAGEMENT
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ── GET /api/admin/subscriptions — list all subscriptions ───────────────────
+const getSubscriptions = async (req, res, next) => {
+  try {
+    const { plan, status } = req.query;
+    const params = [];
+    let sql = `
+      SELECT s.*, u.first_name, u.last_name, u.email
+      FROM subscriptions s
+      LEFT JOIN users u ON u.id = s.user_id
+      WHERE 1=1
+    `;
+    if (plan) { params.push(plan); sql += ` AND s.plan = $${params.length}`; }
+    if (status) { params.push(status); sql += ` AND s.status = $${params.length}`; }
+    sql += ` ORDER BY s.created_at DESC LIMIT 100`;
+    const { rows } = await query(sql, params);
+    res.json({ subscriptions: rows });
+  } catch (err) { next(err); }
+};
+
+// ── POST /api/admin/subscriptions/grant — grant subscription to user ────────
+const grantSubscription = async (req, res, next) => {
+  try {
+    const { userId, plan, durationDays } = req.body;
+    if (!userId || !plan) return res.status(400).json({ error: 'userId and plan required' });
+    if (!['premium', 'gold'].includes(plan)) return res.status(400).json({ error: 'Invalid plan' });
+
+    // Deactivate old subs
+    await query(`UPDATE subscriptions SET status = 'expired' WHERE user_id = $1 AND status = 'active'`, [userId]);
+
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + (durationDays || 30));
+
+    const { rows } = await query(`
+      INSERT INTO subscriptions (user_id, plan, amount, currency, expires_at, gateway_ref)
+      VALUES ($1, $2, 0, 'NGN', $3, 'admin_grant') RETURNING *
+    `, [userId, plan, expiresAt]);
+
+    await query(`
+      INSERT INTO notifications (user_id, title, body, type)
+      VALUES ($1, 'Subscription Granted!', $2, 'subscription_granted')
+    `, [userId, `You've been granted a ${plan.toUpperCase()} subscription by the admin team. Enjoy!`]).catch(() => {});
+
+    res.json({ subscription: rows[0], message: `Granted ${plan} to user` });
+  } catch (err) { next(err); }
+};
+
+// ── PATCH /api/admin/subscriptions/:id/cancel — admin cancel subscription ───
+const adminCancelSubscription = async (req, res, next) => {
+  try {
+    const { rows } = await query(`
+      UPDATE subscriptions SET status = 'cancelled' WHERE id = $1 RETURNING *
+    `, [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Subscription not found' });
+    res.json({ subscription: rows[0], message: 'Subscription cancelled' });
   } catch (err) { next(err); }
 };
 
@@ -127,13 +286,14 @@ const updateUser = async (req, res, next) => {
 const getNotifications = async (req, res, next) => {
   try {
     const { rows } = await query(`
-      SELECT * FROM notifications
-      WHERE user_id = $1
-      ORDER BY created_at DESC
-      LIMIT 50
+      SELECT * FROM notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50
     `, [req.user.id]);
     res.json({ notifications: rows });
   } catch (err) { next(err); }
 };
 
-module.exports = { getDashboard, getUsers, updateUser, getNotifications };
+module.exports = {
+  getDashboard, getUsers, updateUser, getNotifications,
+  getAgents, approveAgent, rejectAgent, suspendAgent, getAgentKYC,
+  getSubscriptions, grantSubscription, adminCancelSubscription,
+};

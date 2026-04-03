@@ -67,6 +67,18 @@ export default function AdminDashboard() {
   const [pwMsg, setPwMsg] = useState({ text: '', type: '' });
   const [pwLoading, setPwLoading] = useState(false);
 
+  // Subscriptions tab
+  const [subscriptions, setSubscriptions] = useState([]);
+  const [subsLoading, setSubsLoading] = useState(false);
+  const [grantForm, setGrantForm] = useState({ userId: '', plan: 'premium', days: 30 });
+  const [grantMsg, setGrantMsg] = useState('');
+
+  // KYC tab
+  const [kycAgents, setKycAgents] = useState([]);
+  const [kycLoading, setKycLoading] = useState(false);
+  const [selectedKyc, setSelectedKyc] = useState(null);
+  const [rejectReason, setRejectReason] = useState('');
+
   // ── Initial load ──────────────────────────────────────────────────────────
   useEffect(() => { loadDashboard(); }, []);
 
@@ -153,6 +165,95 @@ export default function AdminDashboard() {
     } catch (e) { alert(e.message); }
   }
 
+  // ── Load subscriptions ───────────────────────────────────────────────────
+  async function loadSubscriptions() {
+    setSubsLoading(true);
+    try {
+      const token = localStorage.getItem('tragency_token');
+      const res = await fetch('/api/admin/subscriptions', { headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
+      setSubscriptions(data.subscriptions || []);
+    } catch (e) { console.error(e); }
+    finally { setSubsLoading(false); }
+  }
+
+  async function handleGrantSub(e) {
+    e.preventDefault();
+    setGrantMsg('');
+    try {
+      const token = localStorage.getItem('tragency_token');
+      const res = await fetch('/api/admin/subscriptions/grant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ userId: grantForm.userId, plan: grantForm.plan, durationDays: parseInt(grantForm.days) }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setGrantMsg(`Granted ${grantForm.plan} to user!`);
+      loadSubscriptions();
+    } catch (e) { setGrantMsg(e.message); }
+  }
+
+  async function cancelSub(id) {
+    if (!window.confirm('Cancel this subscription?')) return;
+    try {
+      const token = localStorage.getItem('tragency_token');
+      await fetch(`/api/admin/subscriptions/${id}/cancel`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
+      setSubscriptions(prev => prev.map(s => s.id === id ? { ...s, status: 'cancelled' } : s));
+    } catch (e) { alert(e.message); }
+  }
+
+  // ── Load KYC agents ────────────────────────────────────────────────────
+  async function loadKycAgents() {
+    setKycLoading(true);
+    try {
+      const token = localStorage.getItem('tragency_token');
+      const res = await fetch('/api/admin/agents', { headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
+      setKycAgents(data.agents || []);
+    } catch (e) { console.error(e); }
+    finally { setKycLoading(false); }
+  }
+
+  async function handleApproveKyc(agentId) {
+    if (!window.confirm('Approve this agent? They will be able to receive bookings.')) return;
+    try {
+      const token = localStorage.getItem('tragency_token');
+      await fetch(`/api/admin/agents/${agentId}/approve`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ notes: 'KYC verified and approved' }),
+      });
+      setKycAgents(prev => prev.map(a => a.id === agentId ? { ...a, status: 'active', kyc_status: 'approved' } : a));
+      setSelectedKyc(null);
+    } catch (e) { alert(e.message); }
+  }
+
+  async function handleRejectKyc(agentId) {
+    if (!rejectReason) { alert('Please provide a rejection reason'); return; }
+    try {
+      const token = localStorage.getItem('tragency_token');
+      await fetch(`/api/admin/agents/${agentId}/reject`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ reason: rejectReason }),
+      });
+      setKycAgents(prev => prev.map(a => a.id === agentId ? { ...a, status: 'rejected', kyc_status: 'rejected' } : a));
+      setSelectedKyc(null);
+      setRejectReason('');
+    } catch (e) { alert(e.message); }
+  }
+
+  async function handleSuspendKyc(agentId) {
+    if (!window.confirm('Suspend this agent?')) return;
+    try {
+      const token = localStorage.getItem('tragency_token');
+      await fetch(`/api/admin/agents/${agentId}/suspend`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ reason: 'Suspended by admin' }),
+      });
+      setKycAgents(prev => prev.map(a => a.id === agentId ? { ...a, status: 'suspended' } : a));
+    } catch (e) { alert(e.message); }
+  }
+
   // ── Change password ───────────────────────────────────────────────────────
   async function handleChangePassword(e) {
     e.preventDefault();
@@ -182,6 +283,8 @@ export default function AdminDashboard() {
     setTab(id);
     if (id === 'users' && users.length === 0) loadUsers('', '');
     if (id === 'bookings' && !bookingsLoaded) searchBookings('', '');
+    if (id === 'subscriptions' && subscriptions.length === 0) loadSubscriptions();
+    if (id === 'kyc' && kycAgents.length === 0) loadKycAgents();
   }
 
   // ── Computed ──────────────────────────────────────────────────────────────
@@ -202,6 +305,8 @@ export default function AdminDashboard() {
     { id: 'bookings',      label: 'Bookings',       icon: '\u{1F4CB}' },
     { id: 'payments',      label: 'Payments',       icon: '\u{1F4B0}' },
     { id: 'agents',        label: 'Agents',         icon: '\u{1F91D}', badge: pendingAgents },
+    { id: 'kyc',           label: 'KYC Review',     icon: '\u{1F4DD}' },
+    { id: 'subscriptions', label: 'Subscriptions',  icon: '\u{1F451}' },
     { id: 'users',         label: 'Users',          icon: '\u{1F465}' },
     { id: 'settings',      label: 'Settings',       icon: '\u2699\uFE0F' },
     { id: 'notifications', label: 'Notifications',  icon: '\u{1F514}', badge: unreadCount },
@@ -610,6 +715,189 @@ export default function AdminDashboard() {
                         </td>
                       </tr>
                     ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ═══ KYC REVIEW ═════════════════════════════════════════════ */}
+        {!loading && tab === 'kyc' && (
+          <div className="dash-section anim-fadeUp">
+            <div className="dash-section-head">
+              <div>
+                <h2 className="serif">KYC & Agent Approval</h2>
+                <p className="dash-section-sub">Review agent applications, verify documents, approve or reject</p>
+              </div>
+              <button className="btn-ghost" onClick={loadKycAgents}>Refresh</button>
+            </div>
+
+            {kycLoading ? <div className="dash-loading"><div className="dl-spinner" /> Loading agents...</div> : (
+              <div className="table-wrap">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Agent</th>
+                      <th>Agency</th>
+                      <th>Email</th>
+                      <th>Status</th>
+                      <th>KYC</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {kycAgents.map(a => (
+                      <tr key={a.id}>
+                        <td><strong>{a.first_name} {a.last_name}</strong></td>
+                        <td>{a.agency_name || '—'}</td>
+                        <td style={{ fontSize: 12, color: 'var(--muted)' }}>{a.email}</td>
+                        <td>
+                          <span className={`pill ${a.status === 'active' ? 'pill-completed' : a.status === 'pending_review' ? 'pill-pending' : a.status === 'suspended' ? 'pill-cancelled' : 'pill-info'}`}>
+                            {a.status}
+                          </span>
+                        </td>
+                        <td>
+                          <span className={`pill ${a.kyc_status === 'approved' ? 'pill-completed' : a.kyc_status === 'rejected' ? 'pill-cancelled' : 'pill-pending'}`}>
+                            {a.kyc_status || 'not_submitted'}
+                          </span>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            {a.status !== 'active' && (
+                              <button className="btn-sm btn-sm-success" onClick={() => handleApproveKyc(a.id)}>Approve</button>
+                            )}
+                            {a.status !== 'suspended' && a.status !== 'rejected' && (
+                              <button className="btn-sm btn-sm-danger" onClick={() => { setSelectedKyc(a); setRejectReason(''); }}>Review</button>
+                            )}
+                            {a.status === 'active' && (
+                              <button className="btn-sm btn-sm-warn" onClick={() => handleSuspendKyc(a.id)}>Suspend</button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {kycAgents.length === 0 && (
+                      <tr><td colSpan={6} style={{ textAlign: 'center', padding: 32, color: 'var(--muted)' }}>No agents found</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* KYC Review Modal */}
+            {selectedKyc && (
+              <div className="admin-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setSelectedKyc(null); }}>
+                <div className="admin-modal anim-fadeUp">
+                  <button className="admin-modal-close" onClick={() => setSelectedKyc(null)}>&times;</button>
+                  <h3 className="serif">Review Agent: {selectedKyc.first_name} {selectedKyc.last_name}</h3>
+
+                  <div className="kyc-details">
+                    <div className="kyc-row"><span>Agency:</span><strong>{selectedKyc.agency_name || '—'}</strong></div>
+                    <div className="kyc-row"><span>Email:</span><strong>{selectedKyc.email}</strong></div>
+                    <div className="kyc-row"><span>Phone:</span><strong>{selectedKyc.phone || '—'}</strong></div>
+                    <div className="kyc-row"><span>Country:</span><strong>{selectedKyc.country || '—'}</strong></div>
+                    <div className="kyc-row"><span>License:</span><strong>{selectedKyc.license_number || '—'}</strong></div>
+                    <div className="kyc-row"><span>Status:</span><span className={`pill ${selectedKyc.status === 'active' ? 'pill-completed' : 'pill-pending'}`}>{selectedKyc.status}</span></div>
+                    <div className="kyc-row"><span>KYC Status:</span><span className={`pill ${selectedKyc.kyc_status === 'approved' ? 'pill-completed' : 'pill-pending'}`}>{selectedKyc.kyc_status || 'not_submitted'}</span></div>
+                    {selectedKyc.bio && <div className="kyc-bio"><span>Bio:</span><p>{selectedKyc.bio}</p></div>}
+                    {selectedKyc.specializations && <div className="kyc-row"><span>Specializations:</span><strong>{Array.isArray(selectedKyc.specializations) ? selectedKyc.specializations.join(', ') : selectedKyc.specializations}</strong></div>}
+                  </div>
+
+                  <div style={{ marginTop: 16 }}>
+                    <label style={{ display: 'block', fontSize: 13, color: 'var(--ink3)', marginBottom: 6 }}>Rejection reason (required to reject):</label>
+                    <textarea
+                      value={rejectReason} onChange={e => setRejectReason(e.target.value)}
+                      placeholder="e.g. Missing business registration document..."
+                      style={{ width: '100%', padding: 10, background: 'var(--bg)', color: 'var(--ink)', border: '1px solid var(--offwhite3)', borderRadius: 'var(--radius-sm)', fontSize: 14, minHeight: 80, resize: 'vertical', fontFamily: 'inherit' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+                    <button className="btn-primary" onClick={() => handleApproveKyc(selectedKyc.id)}>Approve Agent</button>
+                    <button className="btn-danger" onClick={() => handleRejectKyc(selectedKyc.id)}>Reject</button>
+                    <button className="btn-ghost" onClick={() => setSelectedKyc(null)}>Cancel</button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ═══ SUBSCRIPTIONS ═══════════════════════════════════════════ */}
+        {!loading && tab === 'subscriptions' && (
+          <div className="dash-section anim-fadeUp">
+            <div className="dash-section-head">
+              <div>
+                <h2 className="serif">Subscription Management</h2>
+                <p className="dash-section-sub">View, grant, and manage user subscriptions</p>
+              </div>
+              <button className="btn-ghost" onClick={loadSubscriptions}>Refresh</button>
+            </div>
+
+            {/* Grant subscription form */}
+            <div style={{ padding: 20, background: 'var(--bg2)', borderRadius: 'var(--radius)', border: '1px solid var(--offwhite3)', marginBottom: 20 }}>
+              <h4 className="serif" style={{ marginBottom: 12 }}>Grant Subscription</h4>
+              <form onSubmit={handleGrantSub} style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, color: 'var(--muted)', marginBottom: 4 }}>User ID</label>
+                  <input value={grantForm.userId} onChange={e => setGrantForm(p => ({ ...p, userId: e.target.value }))}
+                    placeholder="User UUID" required
+                    style={{ padding: '8px 12px', background: 'var(--bg)', color: 'var(--ink)', border: '1px solid var(--offwhite3)', borderRadius: 'var(--radius-sm)', fontSize: 13, width: 280 }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, color: 'var(--muted)', marginBottom: 4 }}>Plan</label>
+                  <select value={grantForm.plan} onChange={e => setGrantForm(p => ({ ...p, plan: e.target.value }))}
+                    style={{ padding: '8px 12px', background: 'var(--bg)', color: 'var(--ink)', border: '1px solid var(--offwhite3)', borderRadius: 'var(--radius-sm)', fontSize: 13 }}>
+                    <option value="premium">Premium</option>
+                    <option value="gold">Gold</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, color: 'var(--muted)', marginBottom: 4 }}>Days</label>
+                  <input type="number" value={grantForm.days} onChange={e => setGrantForm(p => ({ ...p, days: e.target.value }))}
+                    style={{ padding: '8px 12px', background: 'var(--bg)', color: 'var(--ink)', border: '1px solid var(--offwhite3)', borderRadius: 'var(--radius-sm)', fontSize: 13, width: 80 }} />
+                </div>
+                <button type="submit" className="btn-primary">Grant</button>
+              </form>
+              {grantMsg && <p style={{ marginTop: 8, fontSize: 13, color: grantMsg.includes('Granted') ? 'var(--success)' : '#ef4444' }}>{grantMsg}</p>}
+            </div>
+
+            {subsLoading ? <div className="dash-loading"><div className="dl-spinner" /> Loading...</div> : (
+              <div className="table-wrap">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>User</th>
+                      <th>Plan</th>
+                      <th>Amount</th>
+                      <th>Status</th>
+                      <th>Expires</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {subscriptions.map(s => (
+                      <tr key={s.id}>
+                        <td><strong>{s.first_name} {s.last_name}</strong><br/><span style={{ fontSize: 11, color: 'var(--muted)' }}>{s.email}</span></td>
+                        <td>
+                          <span className={`pill ${s.plan === 'gold' ? 'pill-completed' : 'pill-info'}`} style={{ fontWeight: 700 }}>
+                            {s.plan === 'gold' ? '\uD83D\uDC51 Gold' : '\u2B50 Premium'}
+                          </span>
+                        </td>
+                        <td>{'\u20A6'}{Number(s.amount).toLocaleString()}</td>
+                        <td><span className={`pill ${s.status === 'active' ? 'pill-completed' : 'pill-cancelled'}`}>{s.status}</span></td>
+                        <td style={{ fontSize: 12 }}>{s.expires_at ? new Date(s.expires_at).toLocaleDateString() : '—'}</td>
+                        <td>
+                          {s.status === 'active' && (
+                            <button className="btn-sm btn-sm-danger" onClick={() => cancelSub(s.id)}>Cancel</button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                    {subscriptions.length === 0 && (
+                      <tr><td colSpan={6} style={{ textAlign: 'center', padding: 32, color: 'var(--muted)' }}>No subscriptions yet</td></tr>
+                    )}
                   </tbody>
                 </table>
               </div>

@@ -64,7 +64,7 @@ export default function PaystackCheckout({ bookingId, amount, reference, onSucce
         </div>
         <div className="psc-summary-row">
           <span>Amount to pay</span>
-          <strong className="psc-amount">₦{Number(amount).toLocaleString()}</strong>
+          <strong className="psc-amount">${Number(amount).toLocaleString()}</strong>
         </div>
         <div className="psc-summary-row">
           <span>Escrow protection</span>
@@ -72,7 +72,7 @@ export default function PaystackCheckout({ bookingId, amount, reference, onSucce
         </div>
         <div className="psc-summary-row">
           <span>Platform fee (5%)</span>
-          <strong>₦{Math.round(amount * 0.05).toLocaleString()}</strong>
+          <strong>${Math.round(amount * 0.05).toLocaleString()}</strong>
         </div>
       </div>
 
@@ -85,7 +85,7 @@ export default function PaystackCheckout({ bookingId, amount, reference, onSucce
         {loading ? (
           <span className="psc-loading"><span className="psc-spinner" /> Processing…</span>
         ) : (
-          <>Pay ₦{Number(amount).toLocaleString()} Securely →</>
+          <>Pay ${Number(amount).toLocaleString()} Securely →</>
         )}
       </button>
 

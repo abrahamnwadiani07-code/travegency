@@ -137,7 +137,7 @@ export default function AgentsPage() {
 
                     <div className="ac-stats">
                       <div className="acs"><span className="acs-val">{a.experience_yrs || 0}</span><span className="acs-lbl">Yrs exp</span></div>
-                      <div className="acs"><span className="acs-val">₦{Number(a.rate_per_trip || 0).toLocaleString()}</span><span className="acs-lbl">Per trip</span></div>
+                      <div className="acs"><span className="acs-val">${Number(a.rate_per_trip || 0).toLocaleString()}</span><span className="acs-lbl">Per trip</span></div>
                       <div className="acs"><span className="acs-val">{a.total_bookings || 0}</span><span className="acs-lbl">Trips</span></div>
                     </div>
 

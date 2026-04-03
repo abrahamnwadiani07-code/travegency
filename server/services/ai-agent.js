@@ -328,7 +328,7 @@ function findCountries(text) {
   const sorted = Object.entries(COUNTRY_MAP).sort((a, b) => b[0].length - a[0].length);
   for (const [key, val] of sorted) {
     if (lower.includes(key) && !found.find(c => c.name === val)) {
-      found.push({ name: val, pos: lower.indexOf(key), isAfrican: AFRICAN.includes(val) });
+      found.push({ name: val, pos: lower.indexOf(key) });
     }
   }
   return found;
@@ -336,7 +336,7 @@ function findCountries(text) {
 
 function extractFromTo(allText) {
   const countries = findCountries(allText);
-  if (countries.length < 2) return { from: countries[0]?.isAfrican ? countries[0]?.name : null, to: !countries[0]?.isAfrican ? countries[0]?.name : null };
+  if (countries.length < 2) return { from: null, to: null };
 
   // Look for "from X" and "to Y" patterns
   const lower = allText.toLowerCase();
@@ -354,9 +354,8 @@ function extractFromTo(allText) {
     if (tc.length) to = tc[0].name;
   }
 
-  // Fallback: first African country = from, first non-African = to
-  if (!from) from = countries.find(c => c.isAfrican)?.name;
-  if (!to) to = countries.find(c => !c.isAfrican && c.name !== from)?.name;
+  // Fallback: use mention order — first mentioned = from, second = to
+  if (!from && countries.length >= 1) from = countries[0]?.name;
   if (!to && countries.length >= 2) to = countries.find(c => c.name !== from)?.name;
 
   return { from, to };
@@ -427,13 +426,8 @@ async function generateResponse(messages, context) {
     const mentioned = findCountries(lastMsg);
     if (mentioned.length) {
       const c = mentioned[0];
-      if (c.isAfrican) {
-        updates.from_country = c.name;
-        return { content: `Thank you! So you're based in **${c.name}**.\n\n**And which country would you like to ${path === 'education' ? 'study in' : path === 'relocation' ? 'relocate to' : 'travel to'}?**`, updates };
-      } else {
-        updates.to_country = c.name;
-        return { content: `**${c.name}** — excellent choice!\n\n**Which country are you currently based in?** This helps me give you the exact visa requirements for your nationality.`, updates };
-      }
+      updates.from_country = c.name;
+      return { content: `Thank you! So you're based in **${c.name}**.\n\n**And which country would you like to ${path === 'education' ? 'study in' : path === 'relocation' ? 'relocate to' : 'travel to'}?**`, updates };
     }
     return { content: `I appreciate your response! To give you accurate visa requirements, I need to know your **current country of residence**. Could you let me know which country you're based in?`, updates };
   }
@@ -687,7 +681,7 @@ function generateSuggestions(context, aiResponse) {
   const path = context.travel_path;
 
   if (!from) {
-    suggestions.push('Nigeria', 'Ghana', 'Kenya', 'South Africa', 'India');
+    suggestions.push('United States', 'United Kingdom', 'India', 'Nigeria', 'Germany');
   } else if (!to) {
     suggestions.push('United Kingdom', 'United States', 'Canada', 'Germany', 'Australia');
   } else if (aiResponse.includes('ready') || aiResponse.includes('agent')) {

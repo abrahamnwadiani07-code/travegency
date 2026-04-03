@@ -22,8 +22,8 @@ function initials(name) {
     .toUpperCase();
 }
 
-function formatNaira(n) {
-  return '\u20A6' + Number(n || 0).toLocaleString();
+function formatCurrency(n) {
+  return '$' + Number(n || 0).toLocaleString();
 }
 
 const AVATAR_COLORS = ['#6366f1', '#06b6d4', '#ef4444', '#f59e0b', '#10b981', '#8b5cf6', '#ec4899'];
@@ -293,7 +293,7 @@ export default function SwipeMatch() {
                   <span className="sp-stat-lbl">Years Exp.</span>
                 </div>
                 <div className="sp-stat">
-                  <span className="sp-stat-val">{formatNaira(a.rate_per_trip)}</span>
+                  <span className="sp-stat-val">{formatCurrency(a.rate_per_trip)}</span>
                   <span className="sp-stat-lbl">Per Trip</span>
                 </div>
                 <div className="sp-stat">
@@ -342,7 +342,7 @@ export default function SwipeMatch() {
               )}
 
               <div className="sp-fee">
-                Matching fee: {formatNaira(matchingFee)} (one-time)
+                Matching fee: {formatCurrency(matchingFee)} (one-time)
               </div>
 
               <button
@@ -350,7 +350,7 @@ export default function SwipeMatch() {
                 onClick={handleSelect}
                 disabled={selecting}
               >
-                {selecting ? 'Processing...' : `Select & Pay ${formatNaira(a.matching_fee || matchingFee)}`}
+                {selecting ? 'Processing...' : `Select & Pay ${formatCurrency(a.matching_fee || matchingFee)}`}
               </button>
             </div>
           </div>
@@ -394,7 +394,7 @@ export default function SwipeMatch() {
             )}
           </div>
           <div className="sh-fee">
-            Matching fee: <strong>{formatNaira(matchingFee)}</strong> (one-time)
+            Matching fee: <strong>{formatCurrency(matchingFee)}</strong> (one-time)
           </div>
         </div>
       </div>
@@ -445,7 +445,7 @@ export default function SwipeMatch() {
                   <span className="sc-stat-lbl">Years</span>
                 </div>
                 <div className="sc-stat">
-                  <span className="sc-stat-val">{formatNaira(currentAgent.rate_per_trip)}</span>
+                  <span className="sc-stat-val">{formatCurrency(currentAgent.rate_per_trip)}</span>
                   <span className="sc-stat-lbl">Per Trip</span>
                 </div>
                 <div className="sc-stat">

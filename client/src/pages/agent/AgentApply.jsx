@@ -2,13 +2,9 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { PATH_LIST } from '../../data/paths';
+import { COUNTRIES } from '../../data/countries';
 import '../auth/Auth.css';
 import './AgentApply.css';
-
-const COUNTRIES = [
-  'Nigeria', 'Ghana', 'Kenya', 'South Africa', 'United Kingdom',
-  'United States', 'Canada', 'Germany', 'Australia', 'UAE', 'Other',
-];
 
 export default function AgentApply() {
   const navigate = useNavigate();
@@ -20,7 +16,7 @@ export default function AgentApply() {
 
   const [form, setForm] = useState({
     firstName: '', lastName: '', email: '', phone: '',
-    password: '', confirm: '', country: 'Nigeria',
+    password: '', confirm: '', country: '',
     displayName: '', bio: '', location: '',
     experienceYrs: '', ratePerTrip: '',
     selectedPaths: [],
@@ -141,6 +137,7 @@ export default function AgentApply() {
               <div className="fg">
                 <label>Country</label>
                 <select value={form.country} onChange={update('country')}>
+                  <option value="">Select country…</option>
                   {COUNTRIES.map(c => <option key={c}>{c}</option>)}
                 </select>
               </div>
@@ -178,7 +175,7 @@ export default function AgentApply() {
               </div>
               <div className="fg">
                 <label>Location *</label>
-                <input value={form.location} onChange={update('location')} placeholder="e.g. Lagos, Nigeria" required />
+                <input value={form.location} onChange={update('location')} placeholder="e.g. London, UK" required />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="fg">
@@ -186,7 +183,7 @@ export default function AgentApply() {
                   <input type="number" min="0" value={form.experienceYrs} onChange={update('experienceYrs')} placeholder="0" />
                 </div>
                 <div className="fg">
-                  <label>Rate per trip (₦)</label>
+                  <label>Rate per trip (USD)</label>
                   <input type="number" min="0" value={form.ratePerTrip} onChange={update('ratePerTrip')} placeholder="350000" />
                 </div>
               </div>

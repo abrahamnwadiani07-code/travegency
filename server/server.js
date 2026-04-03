@@ -30,6 +30,7 @@ app.use(cors({
 // ── Body parsing ──────────────────────────────────────────────────────────────
 // Raw body needed for Paystack webhook signature verification
 app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
+app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 

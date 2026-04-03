@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './Upgrade.css';
 
-const API = '/api';
+const API = process.env.REACT_APP_API_URL || '/api';
 
 function getToken() {
   return localStorage.getItem('tragency_token');

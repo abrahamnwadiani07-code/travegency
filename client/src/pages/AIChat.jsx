@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { PATHS } from '../data/paths';
 import './AIChat.css';
 
+const API = process.env.REACT_APP_API_URL || '/api';
+
 /* ── Helpers ────────────────────────────────────────────────────────────────── */
 
 const COUNTRY_FLAGS = {
@@ -153,7 +155,7 @@ export default function AIChat() {
   useEffect(() => {
     async function restore() {
       try {
-        const res = await fetch(`/api/ai/conversation/${sessionId}`);
+        const res = await fetch(`${API}/ai/conversation/${sessionId}`);
         if (res.ok) {
           const data = await res.json();
           if (data.messages?.length > 0) {
@@ -178,7 +180,7 @@ export default function AIChat() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/ai/chat', {
+      const res = await fetch(`${API}/ai/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId, message: text }),

@@ -6,6 +6,8 @@ import { Link } from 'react-router-dom';
 import './Dashboard.css';
 import './AdminDashboard.css';
 
+const API_BASE = process.env.REACT_APP_API_URL || '/api';
+
 const STATUS_COLORS = {
   pending: 'pill-pending', agent_assigned: 'pill-info',
   confirmed: 'pill-confirmed', in_progress: 'pill-info',
@@ -170,7 +172,7 @@ export default function AdminDashboard() {
     setSubsLoading(true);
     try {
       const token = localStorage.getItem('tragency_token');
-      const res = await fetch('/api/admin/subscriptions', { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`${API_BASE}/admin/subscriptions`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
       setSubscriptions(data.subscriptions || []);
     } catch (e) { console.error(e); }
@@ -182,7 +184,7 @@ export default function AdminDashboard() {
     setGrantMsg('');
     try {
       const token = localStorage.getItem('tragency_token');
-      const res = await fetch('/api/admin/subscriptions/grant', {
+      const res = await fetch(`${API_BASE}/admin/subscriptions/grant`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ userId: grantForm.userId, plan: grantForm.plan, durationDays: parseInt(grantForm.days) }),
@@ -198,7 +200,7 @@ export default function AdminDashboard() {
     if (!window.confirm('Cancel this subscription?')) return;
     try {
       const token = localStorage.getItem('tragency_token');
-      await fetch(`/api/admin/subscriptions/${id}/cancel`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
+      await fetch(`${API_BASE}/admin/subscriptions/${id}/cancel`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
       setSubscriptions(prev => prev.map(s => s.id === id ? { ...s, status: 'cancelled' } : s));
     } catch (e) { alert(e.message); }
   }
@@ -208,7 +210,7 @@ export default function AdminDashboard() {
     setKycLoading(true);
     try {
       const token = localStorage.getItem('tragency_token');
-      const res = await fetch('/api/admin/agents', { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`${API_BASE}/admin/agents`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
       setKycAgents(data.agents || []);
     } catch (e) { console.error(e); }
@@ -219,7 +221,7 @@ export default function AdminDashboard() {
     if (!window.confirm('Approve this agent? They will be able to receive bookings.')) return;
     try {
       const token = localStorage.getItem('tragency_token');
-      await fetch(`/api/admin/agents/${agentId}/approve`, {
+      await fetch(`${API_BASE}/admin/agents/${agentId}/approve`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ notes: 'KYC verified and approved' }),
       });
@@ -232,7 +234,7 @@ export default function AdminDashboard() {
     if (!rejectReason) { alert('Please provide a rejection reason'); return; }
     try {
       const token = localStorage.getItem('tragency_token');
-      await fetch(`/api/admin/agents/${agentId}/reject`, {
+      await fetch(`${API_BASE}/admin/agents/${agentId}/reject`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ reason: rejectReason }),
       });
@@ -246,7 +248,7 @@ export default function AdminDashboard() {
     if (!window.confirm('Suspend this agent?')) return;
     try {
       const token = localStorage.getItem('tragency_token');
-      await fetch(`/api/admin/agents/${agentId}/suspend`, {
+      await fetch(`${API_BASE}/admin/agents/${agentId}/suspend`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ reason: 'Suspended by admin' }),
       });

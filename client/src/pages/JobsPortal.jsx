@@ -13,7 +13,7 @@ function getToken() {
   return localStorage.getItem('tragency_token');
 }
 
-const API = '/api';
+const API = process.env.REACT_APP_API_URL || '/api';
 
 /** Minimal markdown: **bold**, bullet lists, numbered lists, paragraphs */
 function renderMarkdown(text) {

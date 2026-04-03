@@ -120,7 +120,8 @@ export default function TravellerDashboard() {
       setPayments(py.payments || []);
       // Load subscription
       try {
-        const subRes = await fetch('/api/subscriptions/me', { headers: { Authorization: `Bearer ${token}` } });
+        const apiBase = process.env.REACT_APP_API_URL || '/api';
+        const subRes = await fetch(`${apiBase}/subscriptions/me`, { headers: { Authorization: `Bearer ${token}` } });
         const subData = await subRes.json();
         setUserPlan(subData.plan || 'free');
         if (subData.activeChatExpiry) setChatExpiry(new Date(subData.activeChatExpiry));

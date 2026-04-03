@@ -37,6 +37,9 @@
 .nlink-upgrade:hover { background: rgba(212,168,83,0.15); color: var(--gold); }
 .nlink-upgrade.active { background: rgba(212,168,83,0.2); }
 
+/* Right area (language + auth/user) */
+.navbar-right { display: flex; align-items: center; gap: 12px; }
+
 /* User area */
 .navbar-user-area { display: flex; align-items: center; gap: 8px; }
 .navbar-user {

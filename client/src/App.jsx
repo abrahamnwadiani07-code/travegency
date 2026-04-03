@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { LanguageProvider } from './context/LanguageContext';
 
 import Navbar             from './components/Navbar';
 import ProtectedRoute     from './components/ProtectedRoute';
@@ -33,6 +34,7 @@ import './index.css';
 export default function App() {
   return (
     <BrowserRouter>
+      <LanguageProvider>
       <AuthProvider>
         <Navbar />
         <Routes>
@@ -80,6 +82,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
+      </LanguageProvider>
     </BrowserRouter>
   );
 }

@@ -1,0 +1,122 @@
+.lang-selector {
+  position: relative;
+  z-index: 200;
+}
+
+.lang-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--offwhite3, rgba(255, 255, 255, 0.1));
+  border-radius: var(--radius-sm, 6px);
+  color: var(--ink, #f0f0f0);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.lang-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--gold, #c9a84c);
+}
+
+.lang-flag {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.lang-code {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.lang-chevron {
+  font-size: 8px;
+  opacity: 0.6;
+}
+
+.lang-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 180px;
+  max-height: 340px;
+  overflow-y: auto;
+  background: var(--bg, #0a0a0f);
+  border: 1px solid var(--offwhite3, rgba(255, 255, 255, 0.1));
+  border-radius: var(--radius, 10px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  padding: 4px;
+  animation: langFadeIn 0.15s ease;
+}
+
+@keyframes langFadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.lang-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm, 6px);
+  color: var(--ink3, rgba(240, 240, 240, 0.7));
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.12s;
+  text-align: left;
+}
+
+.lang-option:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ink, #f0f0f0);
+}
+
+.lang-option--active {
+  background: rgba(201, 168, 76, 0.1);
+  color: var(--gold, #c9a84c);
+}
+
+.lang-option--active:hover {
+  background: rgba(201, 168, 76, 0.15);
+}
+
+.lang-option-name {
+  flex: 1;
+}
+
+.lang-check {
+  color: var(--gold, #c9a84c);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Scrollbar styling for dropdown */
+.lang-dropdown::-webkit-scrollbar {
+  width: 4px;
+}
+.lang-dropdown::-webkit-scrollbar-track {
+  background: transparent;
+}
+.lang-dropdown::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
+/* Responsive: on mobile, ensure dropdown doesn't go off-screen */
+@media (max-width: 768px) {
+  .lang-selector {
+    order: -1;
+  }
+  .lang-dropdown {
+    right: auto;
+    left: 0;
+  }
+}

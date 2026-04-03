@@ -82,12 +82,13 @@ const chat = async (req, res, next) => {
       await query(`UPDATE ai_conversations SET ${setClauses.join(', ')} WHERE id = $${params.length}`, params);
     }
 
-    // Parse ready state from AI response
+    // Parse ready state from AI response — handle both fenced and unfenced JSON
     let ready = false, travelData = null;
-    const jsonMatch = aiResponse.match(/```json\n([\s\S]*?)\n```/);
+    const jsonMatch = aiResponse.match(/```json\s*([\s\S]*?)```/) ||
+                      aiResponse.match(/(\{["\s]*(?:ready|service)["\s]*:[\s\S]*?\})\s*$/);
     if (jsonMatch) {
       try {
-        travelData = JSON.parse(jsonMatch[1]);
+        travelData = JSON.parse(jsonMatch[1].trim());
         ready = travelData.ready === true;
         // Save checklist and summary
         if (ready) {
@@ -113,7 +114,14 @@ const chat = async (req, res, next) => {
     }
 
     // Clean response (remove JSON block for display)
-    const cleanResponse = aiResponse.replace(/```json\n[\s\S]*?\n```/, '').trim();
+    // Strip ALL JSON blocks from display — fenced and unfenced
+    let cleanResponse = aiResponse
+      .replace(/```json\s*[\s\S]*?```/g, '')           // ```json ... ```
+      .replace(/```\s*\{[\s\S]*?\}\s*```/g, '')        // ``` { ... } ```
+      .replace(/\n\s*\{["\s]*ready["\s]*:[\s\S]*?\}\s*$/g, '')  // trailing { "ready": ... }
+      .replace(/\n\s*\{["\s]*service["\s]*:[\s\S]*?\}\s*$/g, '') // trailing { "service": ... }
+      .replace(/\*\*Quick replies?:\*\*\s*.+/gi, '')    // Quick replies line
+      .trim();
 
     res.json({
       message: cleanResponse,

@@ -18,7 +18,15 @@ const API = process.env.REACT_APP_API_URL || '/api';
 /** Minimal markdown: **bold**, bullet lists, numbered lists, paragraphs */
 function renderMarkdown(text) {
   if (!text) return null;
-  const lines = text.split('\n');
+  // Strip any JSON blocks that leaked through
+  const cleaned = text
+    .replace(/```json[\s\S]*?```/g, '')
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/\{["\s]*(?:ready|service|travelPath|profession)["\s]*:[\s\S]*?\}\s*$/g, '')
+    .replace(/\*\*Quick replies?:\*\*\s*.+/gi, '')
+    .trim();
+  if (!cleaned) return null;
+  const lines = cleaned.split('\n');
   const elements = [];
   let i = 0;
 

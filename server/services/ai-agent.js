@@ -850,11 +850,13 @@ async function chat(messages, context) {
   aiText = await callGroq(systemPrompt, messages);
   if (aiText) provider = 'groq';
 
-  // 2. Try Google Gemini (free)
-  aiText = await callGemini(systemPrompt, messages);
-  if (aiText) provider = 'gemini';
+  // 2. Try Google Gemini (if Groq fails)
+  if (!aiText) {
+    aiText = await callGemini(systemPrompt, messages);
+    if (aiText) provider = 'gemini';
+  }
 
-  // 2. Try Claude (if Gemini fails)
+  // 3. Try Claude (if Gemini fails)
   if (!aiText) {
     aiText = await callClaude(systemPrompt, messages);
     if (aiText) provider = 'claude';

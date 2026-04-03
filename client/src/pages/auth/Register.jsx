@@ -1,19 +1,15 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { COUNTRIES } from '../../data/countries';
 import './Auth.css';
-
-const COUNTRIES = [
-  'Nigeria', 'Ghana', 'Kenya', 'South Africa', 'United Kingdom',
-  'United States', 'Canada', 'Germany', 'Australia', 'UAE', 'Other',
-];
 
 export default function Register() {
   const navigate = useNavigate();
   const { register } = useAuth();
   const [form, setForm] = useState({
     firstName: '', lastName: '', email: '', phone: '',
-    password: '', confirm: '', country: 'Nigeria',
+    password: '', confirm: '', country: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
@@ -70,8 +66,9 @@ export default function Register() {
           </div>
           <div className="fg">
             <label>Country</label>
-            <select value={form.country} onChange={update('country')}>
-              {COUNTRIES.map(c => <option key={c}>{c}</option>)}
+            <select value={form.country} onChange={update('country')} required>
+              <option value="">Select your country...</option>
+              {COUNTRIES.map(c => <option key={c.code} value={c.name}>{c.flag} {c.name}</option>)}
             </select>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>

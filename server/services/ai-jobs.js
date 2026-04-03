@@ -270,4 +270,113 @@ async function generateJobResponse(messages, context) {
   };
 }
 
-module.exports = { generateJobResponse, VISA_TYPES_BY_COUNTRY, INDUSTRIES };
+// ── Groq-powered intelligent job consultant ─────────────────────────────────
+async function callGroqJobs(messages, context) {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) return null;
+
+  const info = context._jobInfo || {};
+  let jobContext = '';
+  if (info.targetCountry && VISA_TYPES_BY_COUNTRY[info.targetCountry]) {
+    const v = VISA_TYPES_BY_COUNTRY[info.targetCountry];
+    jobContext = `\nVisa info for ${info.targetCountry}: ${v.type}, min salary ${v.minSalary}, requirements: ${v.requirements}`;
+  }
+
+  const systemPrompt = `You are Tragency's AI Job & Career Consultant — the world's most knowledgeable employment advisor.
+
+YOUR EXPERTISE:
+- You understand EVERY job role and title in the world — from software engineers to underwater welders, from forensic accountants to ethical hackers
+- If a user mentions a job you don't recognize, ask them to describe their daily duties and responsibilities, then learn from their description and classify it properly
+- You know visa sponsorship rules for 25+ countries
+- You understand salary ranges, qualification requirements, and in-demand skills for every industry
+
+YOUR BEHAVIOR:
+- Be warm, professional, encouraging — like a trusted career mentor
+- Ask ONE question at a time
+- ALWAYS reference what the user told you ("You mentioned you're a ${info.profession || 'professional'} with ${info.experience || 'some'} years experience...")
+- If you don't understand a job title, say: "I want to make sure I understand your role correctly. Could you tell me what your main duties and responsibilities are day-to-day?"
+- After learning about their role, classify it into the right industry and suggest matching job categories
+- Give SPECIFIC advice — not generic responses
+- Suggest 2-3 quick reply options at the end
+
+CONVERSATION FLOW:
+1. Ask about their profession/role (if unknown, ask about duties)
+2. Ask about years of experience
+3. Ask about qualifications
+4. Ask about target country
+5. Provide visa sponsorship info + salary expectations
+6. Categorize into: Jobs in current location (sponsored/non-sponsored) + Jobs abroad (sponsored/non-sponsored)
+7. Recommend services: Job Board, Auto-Apply, or Agent Placement
+
+USER PROFILE SO FAR:
+${info.profession ? `- Profession: ${info.profession}` : '- Profession: not yet known'}
+${info.experience ? `- Experience: ${info.experience} years` : ''}
+${info.qualification ? `- Qualification: ${info.qualification}` : ''}
+${info.targetCountry ? `- Target country: ${info.targetCountry}` : ''}
+${context.from_country ? `- Current country: ${context.from_country}` : ''}
+${jobContext}
+
+IMPORTANT: At the end of every response, add:
+**Quick replies:** option1 | option2 | option3
+
+When you have enough info to recommend jobs, include at the END:
+\`\`\`json
+{"ready":true,"service":"jobs","profession":"...","targetCountry":"...","experience":N}
+\`\`\``;
+
+  try {
+    const groqMessages = [
+      { role: 'system', content: systemPrompt },
+      ...messages.map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content })),
+    ];
+
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: groqMessages,
+        max_tokens: 1500,
+        temperature: 0.7,
+      }),
+    });
+
+    const data = await res.json();
+    const text = data.choices?.[0]?.message?.content;
+    if (text) {
+      console.log('[Groq Jobs] Response received');
+
+      // Extract suggestions
+      let suggestions = [];
+      const quickMatch = text.match(/\*\*Quick replies?:\*\*\s*(.+)/i);
+      if (quickMatch) {
+        suggestions = quickMatch[1].split('|').map(s => s.trim()).filter(Boolean);
+      }
+
+      return {
+        content: text.replace(/\*\*Quick replies?:\*\*\s*.+/i, '').trim(),
+        updates: context._jobInfo ? { _jobInfo: context._jobInfo } : {},
+        suggestions,
+      };
+    }
+    return null;
+  } catch (err) {
+    console.error('[Groq Jobs] Error:', err.message);
+    return null;
+  }
+}
+
+// ── Main entry point: try Groq first, fallback to built-in ──────────────────
+async function smartJobResponse(messages, context) {
+  // Try Groq AI first
+  const groqResult = await callGroqJobs(messages, context);
+  if (groqResult) return groqResult;
+
+  // Fallback to built-in rule engine
+  return generateJobResponse(messages, context);
+}
+
+module.exports = { generateJobResponse: smartJobResponse, VISA_TYPES_BY_COUNTRY, INDUSTRIES };

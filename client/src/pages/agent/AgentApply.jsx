@@ -44,7 +44,7 @@ export default function AgentApply() {
 
     try {
       // Register user account
-      await register({
+      const newUser = await register({
         firstName: form.firstName,
         lastName:  form.lastName,
         email:     form.email,
@@ -53,8 +53,22 @@ export default function AgentApply() {
         country:   form.country,
       });
 
-      // Note: In production, this would submit an agent application
-      // that an admin reviews and approves. For now, we show success.
+      // Apply as agent — creates agent profile and updates role
+      const token = localStorage.getItem('tragency_token');
+      const agentRes = await fetch(`${process.env.REACT_APP_API_URL || '/api'}/agents/apply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          bio: form.bio || `Travel agent specializing in ${form.selectedPaths.join(', ')}`,
+          location: form.location,
+          experienceYrs: parseInt(form.experienceYrs) || 1,
+          ratePerTrip: parseInt(form.ratePerTrip) || 0,
+          paths: form.selectedPaths.map(p => ({ path: p, isPrimary: false })),
+        }),
+      });
+      const agentData = await agentRes.json();
+      if (!agentRes.ok) throw new Error(agentData.error || 'Agent application failed');
+
       setSuccess(true);
     } catch (err) {
       setError(err.message);
@@ -77,8 +91,11 @@ export default function AgentApply() {
             <div className="aan-item"><span>⏳</span> Application review takes 24–48 hours</div>
             <div className="aan-item"><span>✓</span> Once approved, you'll access your Agent Dashboard</div>
           </div>
-          <Link to="/login" className="auth-submit" style={{ display:'flex', justifyContent:'center', marginTop:'1.5rem', textDecoration:'none' }}>
-            Go to Login →
+          <Link to="/agent" className="auth-submit" style={{ display:'flex', justifyContent:'center', marginTop:'1.5rem', textDecoration:'none' }}>
+            Go to Agent Portal →
+          </Link>
+          <Link to="/agent/kyc" style={{ display:'block', marginTop:'0.75rem', color:'var(--gold)', textDecoration:'none', fontSize: 14 }}>
+            Complete KYC Verification →
           </Link>
         </div>
       </div>

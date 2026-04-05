@@ -119,7 +119,9 @@ const createAgent = async (req, res, next) => {
       }
     }
 
-    res.status(201).json({ agent });
+    // Return updated user with new role
+    const { rows: userRows } = await query(`SELECT id, role, first_name, last_name, email, is_verified FROM users WHERE id = $1`, [userId]);
+    res.status(201).json({ agent, user: userRows[0] });
   } catch (err) { next(err); }
 };
 

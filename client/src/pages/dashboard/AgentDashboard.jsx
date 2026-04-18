@@ -442,6 +442,24 @@ export default function AgentDashboard() {
                       <span style={{ marginLeft: 'auto', fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
                         {selected.traveller_name || selected.traveller_email}
                       </span>
+                      <button
+                        style={{ marginLeft: 12, padding: '4px 12px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}
+                        onClick={async () => {
+                          try {
+                            const token = localStorage.getItem('tragency_token');
+                            const res = await fetch(`${process.env.REACT_APP_API_URL || '/api'}/sessions/video/start`, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                              body: JSON.stringify({ bookingId: selected.id }),
+                            });
+                            const data = await res.json();
+                            if (data.url) window.open(data.url, '_blank');
+                            else alert('Video call URL not available');
+                          } catch (e) { alert('Failed to start video call'); }
+                        }}
+                      >
+                        {'\uD83D\uDCF9'} Video Call
+                      </button>
                     </div>
                     <div className="chat-messages">
                       {messages.length === 0 && (

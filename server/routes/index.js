@@ -24,6 +24,11 @@ const cvCtrl         = require('../controllers/cv.controller');
 const stripeCtrl     = require('../controllers/stripe.controller');
 const paypalCtrl     = require('../controllers/paypal.controller');
 const sessionsCtrl   = require('../controllers/sessions.controller');
+const pathwayCtrl    = require('../controllers/pathway.controller');
+const doccheckCtrl   = require('../controllers/doccheck.controller');
+const visapredCtrl   = require('../controllers/visapredict.controller');
+const scholarCtrl    = require('../controllers/scholarship.controller');
+const colCtrl        = require('../controllers/costofliving.controller');
 
 // ══════════════════════════════════════════════════════════════════════════════
 // AUTH
@@ -282,5 +287,40 @@ router.get('/visa/:from/:to/:category', sessionsCtrl.getVisaRequirements);
 router.post('/cv/upload',     authenticate, cvCtrl.cvUpload, cvCtrl.uploadAndReview);
 router.get('/cv/reviews',     authenticate, cvCtrl.getReviews);
 router.get('/cv/latest',      authenticate, cvCtrl.getLatestReview);
+
+// ══════════════════════════════════════════════════════════════════════════════
+// IMMIGRATION PATHWAY TRACKER
+// ══════════════════════════════════════════════════════════════════════════════
+router.post('/pathways',          authenticate, pathwayCtrl.create);
+router.get('/pathways',           authenticate, pathwayCtrl.list);
+router.get('/pathways/:id',       authenticate, pathwayCtrl.get);
+router.patch('/pathways/:id/step', authenticate, pathwayCtrl.updateStep);
+router.patch('/pathways/:id',     authenticate, pathwayCtrl.update);
+
+// ══════════════════════════════════════════════════════════════════════════════
+// AI DOCUMENT CHECKER
+// ══════════════════════════════════════════════════════════════════════════════
+router.post('/documents/check',   authenticate, doccheckCtrl.check);
+router.get('/documents/checks',   authenticate, doccheckCtrl.list);
+
+// ══════════════════════════════════════════════════════════════════════════════
+// VISA SUCCESS PREDICTOR
+// ══════════════════════════════════════════════════════════════════════════════
+router.post('/visa/predict',      authenticate, visapredCtrl.predict);
+router.get('/visa/predictions',   authenticate, visapredCtrl.list);
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SCHOLARSHIP FINDER
+// ══════════════════════════════════════════════════════════════════════════════
+router.get('/scholarships',       scholarCtrl.list);
+router.get('/scholarships/match', authenticate, scholarCtrl.match);
+router.post('/scholarships',      authenticate, requireAdmin, scholarCtrl.create);
+
+// ══════════════════════════════════════════════════════════════════════════════
+// COST OF LIVING
+// ══════════════════════════════════════════════════════════════════════════════
+router.get('/cost-of-living/compare', colCtrl.compare);
+router.get('/cost-of-living/cities',  colCtrl.cities);
+router.get('/cost-of-living/:city',   colCtrl.getCity);
 
 module.exports = router;

@@ -60,6 +60,14 @@ app.listen(PORT, () => {
   console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`   Database:    ${process.env.DB_NAME || 'via DATABASE_URL'}@${process.env.DB_HOST || 'cloud'}\n`);
 
+  // ── Run new migrations ─────────────────────────────────────────────────
+  const migrateV10 = require('./migrate-v10');
+  migrateV10().then(() => {
+    console.log('Migration v10 complete');
+    const seedV10 = require('./seed-v10');
+    seedV10().catch(e => console.error('Seed v10 error:', e.message));
+  }).catch(e => console.error('Migration v10 error:', e.message));
+
   // ── Auto-fetch jobs every 12 hours ──────────────────────────────────────
   const { fetchAllJobs } = require('./services/job-fetcher');
   const TWELVE_HOURS = 12 * 60 * 60 * 1000;

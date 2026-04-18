@@ -15,6 +15,11 @@ import Jobs               from './pages/Jobs';
 import Upgrade            from './pages/Upgrade';
 import JobsPortal         from './pages/JobsPortal';
 import News               from './pages/News';
+import PathwayTracker     from './pages/PathwayTracker';
+import DocChecker         from './pages/DocChecker';
+import VisaPredictor      from './pages/VisaPredictor';
+import ScholarshipFinder  from './pages/ScholarshipFinder';
+import CostOfLiving       from './pages/CostOfLiving';
 
 import Login              from './pages/auth/Login';
 import Register           from './pages/auth/Register';
@@ -52,6 +57,13 @@ export default function App() {
           <Route path="/jobs/board"         element={<Jobs />} />
           <Route path="/news"               element={<News />} />
           <Route path="/upgrade"            element={<Upgrade />} />
+
+          {/* Tools */}
+          <Route path="/pathway"            element={<ProtectedRoute><PathwayTracker /></ProtectedRoute>} />
+          <Route path="/doc-checker"        element={<DocChecker />} />
+          <Route path="/visa-predictor"     element={<VisaPredictor />} />
+          <Route path="/scholarships"       element={<ScholarshipFinder />} />
+          <Route path="/cost-of-living"     element={<CostOfLiving />} />
 
           {/* Auth */}
           <Route path="/login"              element={<Login />} />

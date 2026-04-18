@@ -291,36 +291,36 @@ router.get('/cv/latest',      authenticate, cvCtrl.getLatestReview);
 // ══════════════════════════════════════════════════════════════════════════════
 // IMMIGRATION PATHWAY TRACKER
 // ══════════════════════════════════════════════════════════════════════════════
-router.post('/pathways',          authenticate, pathwayCtrl.create);
-router.get('/pathways',           authenticate, pathwayCtrl.list);
-router.get('/pathways/:id',       authenticate, pathwayCtrl.get);
+router.post('/pathways',          authenticate, pathwayCtrl.createPathway);
+router.get('/pathways',           authenticate, pathwayCtrl.getPathways);
+router.get('/pathways/:id',       authenticate, pathwayCtrl.getPathway);
 router.patch('/pathways/:id/step', authenticate, pathwayCtrl.updateStep);
-router.patch('/pathways/:id',     authenticate, pathwayCtrl.update);
+router.patch('/pathways/:id',     authenticate, pathwayCtrl.updatePathway);
 
 // ══════════════════════════════════════════════════════════════════════════════
 // AI DOCUMENT CHECKER
 // ══════════════════════════════════════════════════════════════════════════════
-router.post('/documents/check',   authenticate, doccheckCtrl.check);
-router.get('/documents/checks',   authenticate, doccheckCtrl.list);
+router.post('/documents/check',   authenticate, doccheckCtrl.checkDocument);
+router.get('/documents/checks',   authenticate, doccheckCtrl.getDocumentChecks);
 
 // ══════════════════════════════════════════════════════════════════════════════
 // VISA SUCCESS PREDICTOR
 // ══════════════════════════════════════════════════════════════════════════════
-router.post('/visa/predict',      authenticate, visapredCtrl.predict);
-router.get('/visa/predictions',   authenticate, visapredCtrl.list);
+router.post('/visa/predict',      authenticate, visapredCtrl.predictVisa);
+router.get('/visa/predictions',   authenticate, visapredCtrl.getPredictions);
 
 // ══════════════════════════════════════════════════════════════════════════════
 // SCHOLARSHIP FINDER
 // ══════════════════════════════════════════════════════════════════════════════
-router.get('/scholarships',       scholarCtrl.list);
-router.get('/scholarships/match', authenticate, scholarCtrl.match);
-router.post('/scholarships',      authenticate, requireAdmin, scholarCtrl.create);
+router.get('/scholarships',       scholarCtrl.getScholarships);
+router.get('/scholarships/match', authenticate, scholarCtrl.matchScholarships);
+router.post('/scholarships',      authenticate, requireAdmin, scholarCtrl.addScholarship);
 
 // ══════════════════════════════════════════════════════════════════════════════
 // COST OF LIVING
 // ══════════════════════════════════════════════════════════════════════════════
-router.get('/cost-of-living/compare', colCtrl.compare);
-router.get('/cost-of-living/cities',  colCtrl.cities);
+router.get('/cost-of-living/compare', colCtrl.compareCities);
+router.get('/cost-of-living/cities',  colCtrl.getCities);
 router.get('/cost-of-living/:city',   colCtrl.getCity);
 
 module.exports = router;

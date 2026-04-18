@@ -132,7 +132,10 @@ async function seedV10() {
   console.log(`  ✓ ${cities.length} cities cost of living seeded`);
 
   console.log('✅ V10 seed complete!');
-  process.exit(0);
 }
 
-seedV10().catch(e => { console.error(e); process.exit(1); });
+module.exports = seedV10;
+
+if (require.main === module) {
+  seedV10().then(() => process.exit(0)).catch(e => { console.error(e); process.exit(1); });
+}

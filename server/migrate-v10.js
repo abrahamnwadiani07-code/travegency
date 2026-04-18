@@ -112,7 +112,10 @@ async function migrateV10() {
   console.log('  ✓ cost_of_living table');
 
   console.log('✅ V10 migration complete!');
-  process.exit(0);
 }
 
-migrateV10().catch(e => { console.error(e); process.exit(1); });
+module.exports = migrateV10;
+
+if (require.main === module) {
+  migrateV10().then(() => process.exit(0)).catch(e => { console.error(e); process.exit(1); });
+}

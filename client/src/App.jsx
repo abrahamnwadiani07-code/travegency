@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 
@@ -36,13 +36,12 @@ import AdminDashboard     from './pages/dashboard/AdminDashboard';
 
 import './index.css';
 
-export default function App() {
+function AppRoutes() {
+  const loc = useLocation();
+  const isHome = loc.pathname === '/';
   return (
-    <BrowserRouter>
-      <LanguageProvider>
-      <AuthProvider>
-        <Navbar />
-        <Routes>
+    <div className={isHome ? 'app-content--home' : 'app-content'}>
+      <Routes>
           {/* Public */}
           <Route path="/"                   element={<Home />} />
           <Route path="/start"              element={<Onboarding />} />
@@ -93,6 +92,17 @@ export default function App() {
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <LanguageProvider>
+      <AuthProvider>
+        <Navbar />
+        <AppRoutes />
       </AuthProvider>
       </LanguageProvider>
     </BrowserRouter>

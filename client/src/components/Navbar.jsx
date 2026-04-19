@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -11,6 +11,15 @@ export default function Navbar() {
   const { t } = useLanguage();
   const [menuOpen, setMenuOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const isHome = loc.pathname === '/';
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 60);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const dashLink = user?.role === 'admin' ? '/admin'
                  : user?.role === 'agent' ? '/agent'
@@ -21,7 +30,7 @@ export default function Navbar() {
                   : t('nav.dashboard');
 
   return (
-    <nav className="navbar">
+    <nav className={`navbar${isHome && !scrolled ? ' navbar--transparent' : ''}${scrolled ? ' navbar--scrolled' : ''}`}>
       <Link to="/" className="navbar-logo">
         <div className="navbar-logo-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">

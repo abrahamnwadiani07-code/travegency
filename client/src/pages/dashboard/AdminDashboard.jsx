@@ -92,6 +92,13 @@ export default function AdminDashboard() {
   const [editPrices, setEditPrices] = useState({});
   const [pricingMsg, setPricingMsg] = useState('');
 
+  // Exchange rates tab
+  const [exchangeRates, setExchangeRates] = useState({});
+  const [exchangeLoading, setExchangeLoading] = useState(false);
+  const [exchangeMsg, setExchangeMsg] = useState('');
+  const [exchangeEditing, setExchangeEditing] = useState(false);
+  const [editRates, setEditRates] = useState({});
+
   // KYC tab
   const [kycAgents, setKycAgents] = useState([]);
   const [kycLoading, setKycLoading] = useState(false);
@@ -366,6 +373,62 @@ export default function AdminDashboard() {
     if (id === 'revenue' && !revenue) loadRevenue();
     if (id === 'pricing' && !pricingConfig) loadPricing();
     if (id === 'kyc' && kycAgents.length === 0) loadKycAgents();
+    if (id === 'exchange' && Object.keys(exchangeRates).length === 0) loadExchangeRates();
+  }
+
+  // ── Exchange rates ──────────────────────────────────────────────────────
+  async function loadExchangeRates() {
+    setExchangeLoading(true);
+    try {
+      const token = localStorage.getItem('tragency_token');
+      const res = await fetch(`${API_BASE}/admin/exchange-rates`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      const rates = data.rates || {};
+      // Provide defaults if empty
+      if (Object.keys(rates).length === 0) {
+        const defaults = {
+          NGN: 0.00065, GHS: 0.065, KES: 0.0065, ZAR: 0.055,
+          TZS: 0.00038, UGX: 0.00027, ETB: 0.008, RWF: 0.00072,
+          EGP: 0.02, XAF: 0.0016, AED: 0.27, SAR: 0.27,
+          QAR: 0.27, KRW: 0.00075, CNY: 0.14, PHP: 0.018,
+          PKR: 0.0035, BDT: 0.0084,
+        };
+        setExchangeRates(defaults);
+        setEditRates(defaults);
+      } else {
+        setExchangeRates(rates);
+        setEditRates(rates);
+      }
+    } catch (e) { console.error(e); }
+    finally { setExchangeLoading(false); }
+  }
+
+  async function saveExchangeRates() {
+    setExchangeLoading(true);
+    setExchangeMsg('');
+    try {
+      const token = localStorage.getItem('tragency_token');
+      const res = await fetch(`${API_BASE}/admin/exchange-rates`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ rates: editRates }),
+      });
+      if (!res.ok) throw new Error('Failed to save');
+      setExchangeRates({ ...editRates });
+      setExchangeEditing(false);
+      setExchangeMsg('Exchange rates saved successfully!');
+    } catch (e) { setExchangeMsg('Error: ' + e.message); }
+    finally { setExchangeLoading(false); }
+  }
+
+  function addExchangeRate() {
+    const code = window.prompt('Enter currency code (e.g. NGN, GHS, KES):');
+    if (!code) return;
+    const rate = window.prompt(`Enter rate for ${code.toUpperCase()} to USD (e.g. 0.00065):`);
+    if (!rate || isNaN(Number(rate))) return;
+    setEditRates(prev => ({ ...prev, [code.toUpperCase()]: Number(rate) }));
   }
 
   // ── Computed ──────────────────────────────────────────────────────────────
@@ -390,6 +453,7 @@ export default function AdminDashboard() {
     { id: 'subscriptions', label: 'Subscriptions',  icon: '\u{1F451}' },
     { id: 'revenue',       label: 'Revenue',         icon: '\u{1F4B5}' },
     { id: 'pricing',       label: 'Pricing',         icon: '\u{1F3F7}' },
+    { id: 'exchange',      label: 'Exchange Rates',  icon: '\u{1F4B1}' },
     { id: 'users',         label: 'Users',          icon: '\u{1F465}' },
     { id: 'postjob',       label: 'Post Job',       icon: '\u{1F4DD}' },
     { id: 'settings',      label: 'Settings',       icon: '\u2699\uFE0F' },
@@ -1207,6 +1271,99 @@ export default function AdminDashboard() {
                 </table>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ═══ EXCHANGE RATES ═══════════════════════════════════════ */}
+        {!loading && tab === 'exchange' && (
+          <div className="dash-section anim-fadeUp">
+            <div className="dash-section-head">
+              <h2 className="serif">Exchange Rates (to USD)</h2>
+              <p>Manage currency conversion rates used for PayPal payments. These rates convert local currencies to USD.</p>
+            </div>
+
+            {exchangeMsg && (
+              <div style={{ padding: '10px 16px', borderRadius: 8, marginBottom: 16, background: exchangeMsg.startsWith('Error') ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)', color: exchangeMsg.startsWith('Error') ? '#ef4444' : '#22c55e', fontSize: 13 }}>
+                {exchangeMsg}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+              {!exchangeEditing ? (
+                <button className="btn-sm btn-primary" onClick={() => setExchangeEditing(true)}>Edit Rates</button>
+              ) : (
+                <>
+                  <button className="btn-sm btn-primary" onClick={saveExchangeRates} disabled={exchangeLoading}>
+                    {exchangeLoading ? 'Saving...' : 'Save All'}
+                  </button>
+                  <button className="btn-sm" onClick={() => { setExchangeEditing(false); setEditRates({ ...exchangeRates }); }}>Cancel</button>
+                </>
+              )}
+              {exchangeEditing && (
+                <button className="btn-sm" onClick={addExchangeRate}>+ Add Currency</button>
+              )}
+            </div>
+
+            {exchangeLoading && Object.keys(editRates).length === 0 ? (
+              <div className="dash-loading"><div className="dash-spinner" /></div>
+            ) : (
+              <div className="dash-table-wrap">
+                <table className="dash-table">
+                  <thead>
+                    <tr>
+                      <th>Currency</th>
+                      <th>Rate (1 unit = X USD)</th>
+                      <th>Example: 10,000 = USD</th>
+                      {exchangeEditing && <th>Action</th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(exchangeEditing ? editRates : exchangeRates)
+                      .sort(([a], [b]) => a.localeCompare(b))
+                      .map(([code, rate]) => (
+                        <tr key={code}>
+                          <td><strong>{code}</strong></td>
+                          <td>
+                            {exchangeEditing ? (
+                              <input
+                                type="number"
+                                step="any"
+                                value={editRates[code] || ''}
+                                onChange={e => setEditRates(prev => ({ ...prev, [code]: Number(e.target.value) }))}
+                                style={{ width: 120, padding: '6px 10px', background: 'var(--bg)', border: '1px solid var(--offwhite3)', borderRadius: 6, color: 'var(--ink)', fontFamily: 'inherit', fontSize: 13 }}
+                              />
+                            ) : (
+                              <span style={{ fontFamily: 'monospace' }}>{rate}</span>
+                            )}
+                          </td>
+                          <td style={{ color: 'var(--gold)', fontWeight: 600 }}>
+                            ${(10000 * (exchangeEditing ? (editRates[code] || 0) : rate)).toFixed(2)}
+                          </td>
+                          {exchangeEditing && (
+                            <td>
+                              <button className="btn-sm btn-cancel" onClick={() => {
+                                const next = { ...editRates };
+                                delete next[code];
+                                setEditRates(next);
+                              }}>Remove</button>
+                            </td>
+                          )}
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <div style={{ marginTop: 20, padding: 16, background: 'var(--bg2)', borderRadius: 12, border: '1px solid var(--offwhite3)' }}>
+              <h4 style={{ color: 'var(--ink3)', fontSize: 13, marginBottom: 8 }}>How exchange rates work</h4>
+              <ul style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.8, paddingLeft: 20 }}>
+                <li>These rates convert local currency amounts to USD for PayPal payments</li>
+                <li>Stripe handles currency conversion automatically (these rates don't affect Stripe)</li>
+                <li>Update rates regularly to match current market rates</li>
+                <li>Rate = how much 1 unit of the currency is worth in USD</li>
+              </ul>
+            </div>
           </div>
         )}
 

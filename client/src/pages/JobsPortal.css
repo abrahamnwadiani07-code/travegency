@@ -360,6 +360,12 @@
 .jp-plans-sub {
   color: var(--muted);
   font-size: 14px;
+  margin-bottom: 0.5rem;
+}
+
+.jp-plans-location {
+  font-size: 12px;
+  color: var(--gold);
   margin-bottom: 2rem;
   text-align: center;
   line-height: 1.6;

@@ -138,6 +138,8 @@ router.patch('/admin/subscriptions/:id/cancel', authenticate, requireAdmin, admi
 router.get('/admin/revenue',                authenticate, requireAdmin, adminCtrl.getRevenue);
 router.get('/admin/pricing',                authenticate, requireAdmin, adminCtrl.getPricingConfig);
 router.patch('/admin/pricing/:country',     authenticate, requireAdmin, adminCtrl.updatePricing);
+router.get('/admin/exchange-rates',         authenticate, requireAdmin, adminCtrl.getExchangeRates);
+router.put('/admin/exchange-rates',         authenticate, requireAdmin, adminCtrl.updateExchangeRates);
 router.get('/admin/stripe/stats',           authenticate, requireAdmin, adminCtrl.getStripeStats);
 router.post('/admin/refund/:chargeId',      authenticate, requireAdmin, adminCtrl.issueRefund);
 

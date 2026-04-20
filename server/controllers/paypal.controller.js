@@ -59,15 +59,22 @@ const createOrder = async (req, res, next) => {
     let payAmount = amount;
 
     if (!paypalCurrencies.includes(payCurrency)) {
-      // Convert to USD using approximate rates
-      const toUSD = {
+      // Try admin-configured rates from DB first, fall back to defaults
+      const defaultRates = {
         'NGN': 0.00065, 'GHS': 0.065, 'KES': 0.0065, 'ZAR': 0.055,
         'TZS': 0.00038, 'UGX': 0.00027, 'ETB': 0.008, 'RWF': 0.00072,
         'EGP': 0.02, 'XAF': 0.0016, 'AED': 0.27, 'SAR': 0.27,
         'QAR': 0.27, 'KRW': 0.00075, 'CNY': 0.14, 'PHP': 0.018,
         'PKR': 0.0035, 'BDT': 0.0084,
       };
-      const rate = toUSD[payCurrency] || 0.01;
+      let dbRates = {};
+      try {
+        const { query: dbQuery } = require('../db');
+        const { rows } = await dbQuery(`SELECT value FROM platform_config WHERE key = 'exchange_rates'`);
+        if (rows[0]?.value) dbRates = rows[0].value;
+      } catch (e) { /* DB unavailable, use defaults */ }
+
+      const rate = dbRates[payCurrency] || defaultRates[payCurrency] || 0.01;
       payAmount = Math.ceil(payAmount * rate * 100) / 100;
       payCurrency = 'USD';
     }

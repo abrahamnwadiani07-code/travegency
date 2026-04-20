@@ -90,13 +90,13 @@ function renderInline(text) {
 
 /* ── Plans ─────────────────────────────────────────────────────────────────── */
 
-const PLANS = [
+const DEFAULT_PLANS = [
   {
     id: 'board',
     apiPlan: 'premium',
+    priceKey: 'premium',
     icon: '\uD83D\uDCCB',
     title: 'Job Board',
-    price: 15000,
     period: '/mo',
     recommended: false,
     features: [
@@ -112,9 +112,9 @@ const PLANS = [
   {
     id: 'autoapply',
     apiPlan: 'gold',
+    priceKey: 'gold',
     icon: '\uD83E\uDD16',
     title: 'Auto-Apply',
-    price: 45000,
     period: '/mo',
     recommended: true,
     features: [
@@ -131,9 +131,9 @@ const PLANS = [
   {
     id: 'agent',
     apiPlan: null,
+    priceKey: 'agentPlacement',
     icon: '\uD83E\uDD1D',
     title: 'Agent Placement',
-    price: 25000,
     period: '',
     recommended: false,
     features: [
@@ -170,10 +170,12 @@ export default function JobsPortal() {
   const [ready, setReady] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
 
-  // Plan selection
+  // Plan selection & pricing
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [subscribing, setSubscribing] = useState(false);
   const [subscribeError, setSubscribeError] = useState('');
+  const [pricing, setPricing] = useState(null);
+  const [detectedCountry, setDetectedCountry] = useState('');
 
   // Inline auth
   const [showAuth, setShowAuth] = useState(false);
@@ -197,9 +199,24 @@ export default function JobsPortal() {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
+  // ── Format price in detected currency ──
+  const fmt = (amount) => pricing ? `${pricing.symbol}${Number(amount).toLocaleString()}` : `$${amount}`;
+  const PLANS = DEFAULT_PLANS.map(p => ({
+    ...p,
+    price: pricing ? pricing[p.priceKey] || 0 : 0,
+  }));
+
   // ── Initial greeting ──
   useEffect(() => {
     setMessages([{ role: 'assistant', content: JOB_GREETING }]);
+  }, []);
+
+  // ── Auto-detect country & pricing ──
+  useEffect(() => {
+    fetch(`${API}/pricing`)
+      .then(r => r.json())
+      .then(d => { setPricing(d.pricing); setDetectedCountry(d.country); })
+      .catch(() => setPricing({ symbol: '$', currency: 'USD', premium: 15, gold: 45, agentPlacement: 25 }));
   }, []);
 
   // ── Auto-scroll ──
@@ -518,6 +535,11 @@ export default function JobsPortal() {
             <p className="jp-plans-sub">
               Select the service level that fits your job search needs.
             </p>
+            {detectedCountry && pricing && (
+              <p className="jp-plans-location">
+                Prices in <strong>{pricing.currency}</strong> for <strong>{detectedCountry}</strong>
+              </p>
+            )}
 
             <div className="jp-plans-grid">
               {PLANS.map((plan) => (
@@ -533,8 +555,7 @@ export default function JobsPortal() {
                   <h3 className="serif jp-plan-name">{plan.title}</h3>
 
                   <div className="jp-plan-price">
-                    <span className="jp-plan-currency">{'\u20A6'}</span>
-                    <span className="jp-plan-amount">{Number(plan.price).toLocaleString()}</span>
+                    <span className="jp-plan-amount">{fmt(plan.price)}</span>
                     {plan.period && <span className="jp-plan-period">{plan.period}</span>}
                   </div>
 

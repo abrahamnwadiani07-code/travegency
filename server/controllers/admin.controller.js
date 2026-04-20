@@ -402,9 +402,39 @@ const issueRefund = async (req, res, next) => {
   }
 };
 
+// ── GET /api/admin/exchange-rates — get current exchange rates ────────────────
+const getExchangeRates = async (req, res, next) => {
+  try {
+    const { rows } = await query(
+      `SELECT value FROM platform_config WHERE key = 'exchange_rates'`
+    );
+    const rates = rows[0]?.value || {};
+    res.json({ rates, updatedAt: rows[0]?.updated_at || null });
+  } catch (err) { next(err); }
+};
+
+// ── PUT /api/admin/exchange-rates — update exchange rates (to USD) ───────────
+const updateExchangeRates = async (req, res, next) => {
+  try {
+    const { rates } = req.body;
+    if (!rates || typeof rates !== 'object') {
+      return res.status(400).json({ error: 'rates object is required' });
+    }
+
+    await query(`
+      INSERT INTO platform_config (key, value)
+      VALUES ('exchange_rates', $1)
+      ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()
+    `, [JSON.stringify(rates)]);
+
+    res.json({ message: 'Exchange rates updated', rates });
+  } catch (err) { next(err); }
+};
+
 module.exports = {
   getDashboard, getUsers, updateUser, getNotifications,
   getAgents, approveAgent, rejectAgent, suspendAgent, getAgentKYC,
   getSubscriptions, grantSubscription, adminCancelSubscription,
   getRevenue, getPricingConfig, updatePricing, getStripeStats, issueRefund,
+  getExchangeRates, updateExchangeRates,
 };

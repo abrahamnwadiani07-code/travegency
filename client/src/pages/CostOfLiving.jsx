@@ -13,14 +13,14 @@ function authHeaders() {
 }
 
 const CATEGORIES = [
-  { key: 'rent1br', label: 'Rent (1 Bedroom)', icon: '🏠' },
-  { key: 'rent3br', label: 'Rent (3 Bedroom)', icon: '🏡' },
-  { key: 'groceries', label: 'Groceries', icon: '🛒' },
-  { key: 'transport', label: 'Transport', icon: '🚌' },
-  { key: 'utilities', label: 'Utilities', icon: '💡' },
-  { key: 'internet', label: 'Internet', icon: '🌐' },
-  { key: 'dining', label: 'Dining Out', icon: '🍽️' },
-  { key: 'healthcare', label: 'Healthcare', icon: '🏥' },
+  { key: 'rent_1br', label: 'Rent (1 Bedroom)', icon: '🏠' },
+  { key: 'rent_3br', label: 'Rent (3 Bedroom)', icon: '🏡' },
+  { key: 'groceries_monthly', label: 'Groceries', icon: '🛒' },
+  { key: 'transport_monthly', label: 'Transport', icon: '🚌' },
+  { key: 'utilities_monthly', label: 'Utilities', icon: '💡' },
+  { key: 'internet_monthly', label: 'Internet', icon: '🌐' },
+  { key: 'dining_out', label: 'Dining Out', icon: '🍽️' },
+  { key: 'healthcare_monthly', label: 'Healthcare', icon: '🏥' },
 ];
 
 function pctDiff(from, to) {
@@ -66,7 +66,12 @@ export default function CostOfLiving() {
       const res = await fetch(`${API}/cost-of-living/compare?${params}`, { headers: authHeaders() });
       if (res.ok) {
         const data = await res.json();
-        setResult(data.comparison || data);
+        // API returns { from: cityObj, to: cityObj, comparison: { ... } }
+        setResult({
+          from: data.from || {},
+          to: data.to || {},
+          comparison: data.comparison || {},
+        });
       }
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -74,7 +79,15 @@ export default function CostOfLiving() {
 
   const fromData = result?.from || {};
   const toData = result?.to || {};
-  const summary = result?.summary || {};
+  const comp = result?.comparison || {};
+  const summary = {
+    monthlyBudget: comp.to_monthly_total,
+    annualSalary: comp.to_monthly_total ? comp.to_monthly_total * 12 : null,
+    qualityOfLife: toData.quality_of_life_score,
+    safetyScore: toData.safety_score,
+    avgSalaryFrom: comp.salary_comparison?.from_avg || fromData.avg_salary,
+    avgSalaryTo: comp.salary_comparison?.to_avg || toData.avg_salary,
+  };
 
   // Find max value for bar scaling
   let maxVal = 1;
@@ -107,11 +120,11 @@ export default function CostOfLiving() {
               <label>From City</label>
               <select value={fromCity} onChange={e => setFromCity(e.target.value)} disabled={citiesLoading}>
                 <option value="">{citiesLoading ? 'Loading cities...' : 'Select city...'}</option>
-                {cities.map((c, i) => (
-                  <option key={i} value={typeof c === 'string' ? c : `${c.city},${c.country}`}>
-                    {typeof c === 'string' ? c : `${c.city}, ${c.country}`}
-                  </option>
-                ))}
+                {cities.map((c, i) => {
+                  const val = typeof c === 'string' ? c : c.city;
+                  const label = typeof c === 'string' ? c : `${c.city}, ${c.country}`;
+                  return <option key={i} value={val}>{label}</option>;
+                })}
               </select>
             </div>
             <div className="col-vs">VS</div>
@@ -119,11 +132,11 @@ export default function CostOfLiving() {
               <label>To City</label>
               <select value={toCity} onChange={e => setToCity(e.target.value)} disabled={citiesLoading}>
                 <option value="">{citiesLoading ? 'Loading cities...' : 'Select city...'}</option>
-                {cities.map((c, i) => (
-                  <option key={i} value={typeof c === 'string' ? c : `${c.city},${c.country}`}>
-                    {typeof c === 'string' ? c : `${c.city}, ${c.country}`}
-                  </option>
-                ))}
+                {cities.map((c, i) => {
+                  const val = typeof c === 'string' ? c : c.city;
+                  const label = typeof c === 'string' ? c : `${c.city}, ${c.country}`;
+                  return <option key={i} value={val}>{label}</option>;
+                })}
               </select>
             </div>
           </div>

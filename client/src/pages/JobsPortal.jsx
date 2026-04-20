@@ -93,10 +93,10 @@ function renderInline(text) {
 const PLANS = [
   {
     id: 'board',
-    apiPlan: 'basic',
+    apiPlan: 'premium',
     icon: '\uD83D\uDCCB',
     title: 'Job Board',
-    price: 5000,
+    price: 15000,
     period: '/mo',
     recommended: false,
     features: [
@@ -111,10 +111,10 @@ const PLANS = [
   },
   {
     id: 'autoapply',
-    apiPlan: 'pro',
+    apiPlan: 'gold',
     icon: '\uD83E\uDD16',
     title: 'Auto-Apply',
-    price: 15000,
+    price: 45000,
     period: '/mo',
     recommended: true,
     features: [

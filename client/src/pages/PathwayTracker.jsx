@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { COUNTRIES } from '../data/countries';
 import './PathwayTracker.css';
 
 const API = process.env.REACT_APP_API_URL || '/api';

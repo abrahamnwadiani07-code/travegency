@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { admin as adminApi, payments as paymentsApi, agents as agentsApi, bookings as bookingsApi, auth as authApi } from '../../services/api';
 import { PATHS } from '../../data/paths';
-import { Link } from 'react-router-dom';
 import './Dashboard.css';
 import './AdminDashboard.css';
 

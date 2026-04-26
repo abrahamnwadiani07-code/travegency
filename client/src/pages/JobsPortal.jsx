@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './JobsPortal.css';
 
@@ -156,7 +156,6 @@ const JOB_GREETING = `I'm your **Job & Visa Sponsorship** AI consultant. I'll he
    ═══════════════════════════════════════════════════════════════════════════ */
 
 export default function JobsPortal() {
-  const navigate = useNavigate();
   const { user, login, register } = useAuth();
 
   // ── State ──
@@ -165,7 +164,7 @@ export default function JobsPortal() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
-  const [conversationId, setConversationId] = useState(null);
+  const [, setConversationId] = useState(null);
   const [jobContext, setJobContext] = useState(null); // AI-extracted profile data
   const [ready, setReady] = useState(false);
   const [suggestions, setSuggestions] = useState([]);

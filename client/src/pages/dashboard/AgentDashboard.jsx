@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+
 import { useAuth } from '../../context/AuthContext';
-import { bookings as bookingsApi, agents as agentsApi, payments as paymentsApi, auth as authApi, admin as adminApi } from '../../services/api';
+import { bookings as bookingsApi, agents as agentsApi, payments as paymentsApi, auth as authApi, notifications as notificationsApi, sessions as sessionsApi } from '../../services/api';
 import { PATHS } from '../../data/paths';
 import './Dashboard.css';
 import './AgentDashboard.css';
@@ -74,12 +74,12 @@ export default function AgentDashboard() {
   // ── Load profile when profile tab is active ─────────────────────────────
   useEffect(() => {
     if (tab === 'profile' && !agentProfile) loadProfile();
-  }, [tab]);
+  }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Load stats when performance tab is active ───────────────────────────
   useEffect(() => {
     if (tab === 'performance' && !stats) loadStats();
-  }, [tab]);
+  }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Load notifications when tab is active ───────────────────────────────
   useEffect(() => {
@@ -131,7 +131,7 @@ export default function AgentDashboard() {
 
   async function loadNotifications() {
     try {
-      const { notifications: n } = await adminApi.notifications();
+      const { notifications: n } = await notificationsApi.list();
       setNotifications(n || []);
     } catch (e) { console.error(e); }
   }
@@ -276,8 +276,8 @@ export default function AgentDashboard() {
               {n.id === 'bookings' && activeBookings.length > 0 && (
                 <span className="dni-badge">{activeBookings.length}</span>
               )}
-              {n.id === 'notifications' && notifications.filter(n => !n.read).length > 0 && (
-                <span className="dni-badge">{notifications.filter(n => !n.read).length}</span>
+              {n.id === 'notifications' && notifications.filter(n => !n.is_read).length > 0 && (
+                <span className="dni-badge">{notifications.filter(n => !n.is_read).length}</span>
               )}
             </button>
           ))}
@@ -446,14 +446,8 @@ export default function AgentDashboard() {
                         style={{ marginLeft: 12, padding: '4px 12px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}
                         onClick={async () => {
                           try {
-                            const token = localStorage.getItem('tragency_token');
-                            const res = await fetch(`${process.env.REACT_APP_API_URL || '/api'}/sessions/video/start`, {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                              body: JSON.stringify({ bookingId: selected.id }),
-                            });
-                            const data = await res.json();
-                            if (data.url) window.open(data.url, '_blank');
+                            const data = await sessionsApi.startVideo({ bookingId: selected.id });
+                            if (data.joinUrl || data.url) window.open(data.joinUrl || data.url, '_blank');
                             else alert('Video call URL not available');
                           } catch (e) { alert('Failed to start video call'); }
                         }}
@@ -863,7 +857,7 @@ export default function AgentDashboard() {
             ) : (
               <div className="notif-list">
                 {notifications.map(n => (
-                  <div key={n.id} className={`notif-item ${!n.read ? 'notif-unread' : ''}`}>
+                  <div key={n.id} className={`notif-item ${!n.is_read ? 'notif-unread' : ''}`}>
                     <div className="notif-title">{n.title}</div>
                     <div className="notif-body">{n.body || n.message}</div>
                     <div className="notif-time">{new Date(n.created_at).toLocaleString()}</div>

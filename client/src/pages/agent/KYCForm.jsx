@@ -15,7 +15,7 @@ const ID_TYPES = [
 ];
 
 export default function KYCForm() {
-  const { user } = useAuth();
+  useAuth();
   const [step, setStep] = useState(1); // 1=form, 2=selfie, 3=review, 4=done
   const [kycStatus, setKycStatus] = useState(null);
   const [loading, setLoading] = useState(true);

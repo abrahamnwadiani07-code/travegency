@@ -36,10 +36,10 @@ function renderMarkdown(text) {
     const line = lines[i];
 
     // Bullet list
-    if (/^[\-\*]\s+/.test(line.trim())) {
+    if (/^[-*]\s+/.test(line.trim())) {
       const items = [];
-      while (i < lines.length && /^[\-\*]\s+/.test(lines[i].trim())) {
-        items.push(lines[i].trim().replace(/^[\-\*]\s+/, ''));
+      while (i < lines.length && /^[-*]\s+/.test(lines[i].trim())) {
+        items.push(lines[i].trim().replace(/^[-*]\s+/, ''));
         i++;
       }
       elements.push(
@@ -51,10 +51,10 @@ function renderMarkdown(text) {
     }
 
     // Numbered list
-    if (/^\d+[\.\)]\s+/.test(line.trim())) {
+    if (/^\d+[.)]\s+/.test(line.trim())) {
       const items = [];
-      while (i < lines.length && /^\d+[\.\)]\s+/.test(lines[i].trim())) {
-        items.push(lines[i].trim().replace(/^\d+[\.\)]\s+/, ''));
+      while (i < lines.length && /^\d+[.)]\s+/.test(lines[i].trim())) {
+        items.push(lines[i].trim().replace(/^\d+[.)]\s+/, ''));
         i++;
       }
       elements.push(
@@ -122,7 +122,7 @@ export default function Portal() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [conversationId, setConversationId] = useState(null);
-  const [travelData, setTravelData] = useState(null);
+  const [, setTravelData] = useState(null);
   const [ready, setReady] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
 

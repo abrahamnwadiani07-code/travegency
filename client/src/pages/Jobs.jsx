@@ -95,8 +95,7 @@ export default function JobsPage() {
   const [applying, setApplying] = useState(false);
   const [applied, setApplied] = useState({});
 
-  // fake logged-in for demo
-  const isLoggedIn = !!localStorage.getItem('token');
+  const isLoggedIn = !!localStorage.getItem('tragency_token');
 
   /* ── fetch jobs ────────────────────────────────────────────── */
   useEffect(() => {

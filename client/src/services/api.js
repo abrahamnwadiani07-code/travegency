@@ -134,6 +134,22 @@ export const subscriptions = {
   cancel           : () => req('/subscriptions/cancel', { method: 'POST' }),
 };
 
+// ── Notifications ────────────────────────────────────────────────────────
+export const notifications = {
+  list             : () => req('/admin/notifications'),
+};
+
+// ── Sessions & Video ─────────────────────────────────────────────────────
+export const sessions = {
+  active           : () => req('/sessions/active'),
+  start            : (body) => req('/sessions/start', { method: 'POST', body: JSON.stringify(body) }),
+  renew            : (id) => req(`/sessions/${id}/renew`, { method: 'POST' }),
+  message          : (body) => req('/sessions/message', { method: 'POST', body: JSON.stringify(body) }),
+  startVideo       : (body) => req('/sessions/video/start', { method: 'POST', body: JSON.stringify(body) }),
+  endVideo         : (id) => req(`/sessions/video/${id}/end`, { method: 'POST' }),
+  activeCalls      : () => req('/sessions/video/active'),
+};
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 export async function loginAndStore(email, password) {
   const data = await auth.login({ email, password });

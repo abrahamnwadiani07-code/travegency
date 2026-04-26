@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useLocation, useSearchParams, Link } from 'react-router-dom';
 import { PATHS } from '../data/paths';
 import './SwipeMatch.css';
 
@@ -36,7 +36,6 @@ function avatarColor(id) {
 
 export default function SwipeMatch() {
   const location = useLocation();
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   const conversationId = location.state?.conversationId || searchParams.get('conversationId') || searchParams.get('cid');

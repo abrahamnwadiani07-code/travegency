@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { PATHS, PATH_LIST } from '../data/paths';
+import { PATH_LIST } from '../data/paths';
 import './Onboarding.css';
 
 export default function Onboarding() {

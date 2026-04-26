@@ -13,7 +13,7 @@ export default function Login() {
   // If already logged in, redirect
   React.useEffect(() => {
     if (user) navigateByRole(user.role);
-  }, [user]);
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function navigateByRole(role) {
     if (role === 'admin')  return navigate('/admin');

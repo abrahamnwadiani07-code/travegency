@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { bookings as bookingsApi, payments as paymentsApi, auth as authApi, reviews as reviewsApi, admin } from '../../services/api';
+import { bookings as bookingsApi, payments as paymentsApi, auth as authApi, reviews as reviewsApi, notifications as notificationsApi, subscriptions as subscriptionsApi, sessions as sessionsApi } from '../../services/api';
 import PaystackCheckout from '../../components/PaystackCheckout';
 import { PATHS } from '../../data/paths';
 import './Dashboard.css';
@@ -111,7 +111,6 @@ export default function TravellerDashboard() {
   async function loadAll() {
     setLoading(true);
     try {
-      const token = localStorage.getItem('tragency_token');
       const [bk, py] = await Promise.all([
         bookingsApi.list({ limit: 100 }),
         paymentsApi.list({ limit: 100 }),
@@ -120,9 +119,7 @@ export default function TravellerDashboard() {
       setPayments(py.payments || []);
       // Load subscription
       try {
-        const apiBase = process.env.REACT_APP_API_URL || '/api';
-        const subRes = await fetch(`${apiBase}/subscriptions/me`, { headers: { Authorization: `Bearer ${token}` } });
-        const subData = await subRes.json();
+        const subData = await subscriptionsApi.me();
         setUserPlan(subData.plan || 'free');
         if (subData.activeChatExpiry) setChatExpiry(new Date(subData.activeChatExpiry));
       } catch (e) { /* ignore */ }
@@ -139,7 +136,7 @@ export default function TravellerDashboard() {
 
   async function loadNotifications() {
     try {
-      const { notifications: data } = await admin.notifications();
+      const { notifications: data } = await notificationsApi.list();
       setNotifications(data || []);
     } catch (e) { console.error(e); }
   }
@@ -241,7 +238,7 @@ export default function TravellerDashboard() {
   });
 
   const reviewableBookings = completed.filter(b => !reviewedIds.has(b.id));
-  const unreadNotifs = notifications.filter(n => !n.read).length;
+  const unreadNotifs = notifications.filter(n => !n.is_read).length;
 
   const NAV = [
     { id: 'bookings',      label: 'Bookings',      icon: '📋' },
@@ -496,14 +493,7 @@ export default function TravellerDashboard() {
                   {selected.agent_id && userPlan !== 'free' && (
                     <button onClick={async () => {
                       try {
-                        const apiBase = process.env.REACT_APP_API_URL || '/api';
-                        const tk = localStorage.getItem('tragency_token');
-                        const res = await fetch(`${apiBase}/sessions/video/start`, {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tk}` },
-                          body: JSON.stringify({ receiverId: selected.agent_id, bookingId: selected.id }),
-                        });
-                        const data = await res.json();
+                        const data = await sessionsApi.startVideo({ receiverId: selected.agent_id, bookingId: selected.id });
                         if (data.joinUrl) window.open(data.joinUrl, '_blank', 'width=800,height=600');
                         else alert(data.error || 'Failed to start call');
                       } catch (e) { alert('Failed to start video call'); }
@@ -957,7 +947,7 @@ export default function TravellerDashboard() {
 
             <div className="notif-list">
               {notifications.map((n, i) => (
-                <div key={n.id || i} className={`notif-item ${!n.read ? 'notif-unread' : ''}`}>
+                <div key={n.id || i} className={`notif-item ${!n.is_read ? 'notif-unread' : ''}`}>
                   <div className="notif-title">{n.title}</div>
                   <div className="notif-body">{n.body}</div>
                   <div className="notif-time">{new Date(n.created_at).toLocaleString()}</div>

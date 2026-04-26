@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { PATH_LIST } from '../../data/paths';
 import { COUNTRIES } from '../../data/countries';
@@ -7,7 +7,6 @@ import '../auth/Auth.css';
 import './AgentApply.css';
 
 export default function AgentApply() {
-  const navigate = useNavigate();
   const { register } = useAuth();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -44,7 +43,7 @@ export default function AgentApply() {
 
     try {
       // Register user account
-      const newUser = await register({
+      await register({
         firstName: form.firstName,
         lastName:  form.lastName,
         email:     form.email,

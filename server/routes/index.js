@@ -272,7 +272,7 @@ router.post('/paypal/capture/:orderId', authenticate, paypalCtrl.captureOrder);
 
 router.get('/visa/search',              sessionsCtrl.searchVisa);
 router.get('/visa/countries',           (req, res) => {
-  const { getAllCountries } = require('./services/../services/ai-agent');
+  const { getAllCountries } = require('../services/ai-agent');
   res.json({ countries: getAllCountries() });
 });
 router.get('/visa/popular',            async (req, res) => {
